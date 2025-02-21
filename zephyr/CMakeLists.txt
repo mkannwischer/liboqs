@@ -128,6 +128,26 @@ if(CONFIG_LIBOQS)
                 set(OQS_ENABLE_SIG_MAYO OFF)
         endif()
 
+        if(CONFIG_LIBOQS_ENABLE_SIG_UOV)
+                set(OQS_ENABLE_SIG_UOV ON)
+                set(OQS_ENABLE_SIG_uov_ov_Is OFF)
+                set(OQS_ENABLE_SIG_uov_ov_Ip OFF)
+                set(OQS_ENABLE_SIG_uov_ov_III OFF)
+                set(OQS_ENABLE_SIG_uov_ov_V OFF)
+                set(OQS_ENABLE_SIG_uov_ov_Is_pkc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_III_pkc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_V_pkc OFF)
+
+                # TODO: check if these all don't work
+                set(OQS_ENABLE_SIG_uov_ov_Ip_pkc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_Is_pkc_skc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_Ip_pkc_skc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_III_pkc_skc OFF)
+                set(OQS_ENABLE_SIG_uov_ov_V_pkc_skc OFF)
+        else()  
+                set(OQS_ENABLE_SIG_UOV OFF)
+        endif()
+
         if(CONFIG_LIBOQS_ENABLE_SIG_CROSS)
                 set(OQS_ENABLE_SIG_CROSS ON)
                 # Disable CROSS variants with large stack usage
