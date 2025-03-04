@@ -2,23 +2,23 @@
   "$schema": "https://raw.githubusercontent.com/CycloneDX/specification/1.6/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:9c46a9fa-736a-4195-8df1-733638fe35de",
+  "serialNumber": "urn:uuid:c0c797c8-867c-41f5-8d35-72cd1f3e9c0f",
   "version": 1,
   "metadata": {
-    "timestamp": "2025-03-04T08:50:14.575745+00:00",
+    "timestamp": "2025-03-04T11:27:55.224031+00:00",
     "component": {
       "type": "library",
-      "bom-ref": "pkg:github/open-quantum-safe/liboqs@4e8b9845ddf6f546816ccb34dc40ebcb5230f815",
+      "bom-ref": "pkg:github/open-quantum-safe/liboqs@d2b5e45424e9a02ee096d69a779176cd2735b9f2",
       "name": "liboqs",
-      "version": "4e8b9845ddf6f546816ccb34dc40ebcb5230f815"
+      "version": "d2b5e45424e9a02ee096d69a779176cd2735b9f2"
     }
   },
   "components": [
     {
       "type": "library",
-      "bom-ref": "pkg:github/open-quantum-safe/liboqs@4e8b9845ddf6f546816ccb34dc40ebcb5230f815",
+      "bom-ref": "pkg:github/open-quantum-safe/liboqs@d2b5e45424e9a02ee096d69a779176cd2735b9f2",
       "name": "liboqs",
-      "version": "4e8b9845ddf6f546816ccb34dc40ebcb5230f815"
+      "version": "d2b5e45424e9a02ee096d69a779176cd2735b9f2"
     },
     {
       "type": "cryptographic-asset",
@@ -3242,6 +3242,26 @@
     },
     {
       "type": "cryptographic-asset",
+      "bom-ref": "alg:OV-Ip:x86_64",
+      "name": "UOV",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "parameterSetIdentifier": "OV-Ip",
+          "primitive": "signature",
+          "executionEnvironment": "software-plain-ram",
+          "cryptoFunctions": [
+            "keygen",
+            "sign",
+            "verify"
+          ],
+          "nistQuantumSecurityLevel": 1,
+          "implementationPlatform": "x86_64"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
       "bom-ref": "alg:OV-III:generic",
       "name": "UOV",
       "cryptoProperties": {
@@ -3667,7 +3687,7 @@
   ],
   "dependencies": [
     {
-      "ref": "pkg:github/open-quantum-safe/liboqs@4e8b9845ddf6f546816ccb34dc40ebcb5230f815",
+      "ref": "pkg:github/open-quantum-safe/liboqs@d2b5e45424e9a02ee096d69a779176cd2735b9f2",
       "provides": [
         "alg:BIKE-L1:x86_64",
         "alg:BIKE-L3:x86_64",
@@ -3830,6 +3850,7 @@
         "alg:OV-Is:armv8-a",
         "alg:OV-Ip:generic",
         "alg:OV-Ip:armv8-a",
+        "alg:OV-Ip:x86_64",
         "alg:OV-III:generic",
         "alg:OV-III:armv8-a",
         "alg:OV-V:generic",
@@ -4759,6 +4780,13 @@
     },
     {
       "ref": "alg:OV-Ip:armv8-a",
+      "dependsOn": [
+        "alg:sha3",
+        "alg:aes"
+      ]
+    },
+    {
+      "ref": "alg:OV-Ip:x86_64",
       "dependsOn": [
         "alg:sha3",
         "alg:aes"

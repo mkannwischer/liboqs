@@ -82,7 +82,7 @@ upstreams:
     name: pqov
     git_url: https://github.com/pqov/pqov.git
     git_branch: main
-    git_commit: 1f9501cda4cd8a7bfcdafcc02640b3e4a2e16a92
+    git_commit: 5918953367b4db4043ebeb3021f5ad025e845b12
     sig_scheme_path: '.'
     sig_meta_path: 'integration/liboqs/{pretty_name_full}_META.yml'
 kems:

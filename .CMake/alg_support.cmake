@@ -689,6 +689,12 @@ endif()
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_X86_64_BUILD OR (OQS_USE_AVX2_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Ip_avx2 "" ON "OQS_ENABLE_SIG_uov_ov_Ip" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
 if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
     cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_III_neon "" ON "OQS_ENABLE_SIG_uov_ov_III" OFF)
 endif()
