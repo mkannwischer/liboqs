@@ -17,7 +17,7 @@ website: https://www.uovsig.org/
 nist-round: 1
 spec-version: NIST Round 2 (February 2025)
 primary-upstream:
-  source: https://github.com/pqov/pqov/commit/c39258eb5b7b9127d06c7830ad3dee1d062c4d2e
+  source: https://github.com/pqov/pqov/commit/1f9501cda4cd8a7bfcdafcc02640b3e4a2e16a92
   spdx-license-identifier: CC0 OR Apache-2.0
 parameter-sets:
 - name: OV-Is
@@ -37,6 +37,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-Ip
   claimed-nist-level: 1
   claimed-security: EUF-CMA
@@ -53,6 +66,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-III
   claimed-nist-level: 3
@@ -71,6 +97,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-V
   claimed-nist-level: 5
   claimed-security: EUF-CMA
@@ -87,6 +126,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-Is-pkc
   claimed-nist-level: 1
@@ -105,6 +157,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-Ip-pkc
   claimed-nist-level: 1
   claimed-security: EUF-CMA
@@ -121,6 +186,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-III-pkc
   claimed-nist-level: 3
@@ -139,6 +217,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-V-pkc
   claimed-nist-level: 5
   claimed-security: EUF-CMA
@@ -155,6 +246,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-Is-pkc-skc
   claimed-nist-level: 1
@@ -173,6 +277,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-Ip-pkc-skc
   claimed-nist-level: 1
   claimed-security: EUF-CMA
@@ -189,6 +306,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-III-pkc-skc
   claimed-nist-level: 3
@@ -207,6 +337,19 @@ parameter-sets:
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
     large-stack-usage: true
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
+    large-stack-usage: false
 - name: OV-V-pkc-skc
   claimed-nist-level: 5
   claimed-security: EUF-CMA
@@ -223,4 +366,17 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false

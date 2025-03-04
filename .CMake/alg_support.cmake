@@ -676,6 +676,78 @@ if(OQS_DIST_X86_64_BUILD OR (OQS_USE_AVX2_INSTRUCTIONS))
 endif()
 
 
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Is_neon "" ON "OQS_ENABLE_SIG_uov_ov_Is" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Ip_neon "" ON "OQS_ENABLE_SIG_uov_ov_Ip" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_III_neon "" ON "OQS_ENABLE_SIG_uov_ov_III" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_V_neon "" ON "OQS_ENABLE_SIG_uov_ov_V" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Is_pkc_neon "" ON "OQS_ENABLE_SIG_uov_ov_Is_pkc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Ip_pkc_neon "" ON "OQS_ENABLE_SIG_uov_ov_Ip_pkc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_III_pkc_neon "" ON "OQS_ENABLE_SIG_uov_ov_III_pkc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_V_pkc_neon "" ON "OQS_ENABLE_SIG_uov_ov_V_pkc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Is_pkc_skc_neon "" ON "OQS_ENABLE_SIG_uov_ov_Is_pkc_skc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_Ip_pkc_skc_neon "" ON "OQS_ENABLE_SIG_uov_ov_Ip_pkc_skc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_III_pkc_skc_neon "" ON "OQS_ENABLE_SIG_uov_ov_III_pkc_skc" OFF)
+endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin")
+if(OQS_DIST_ARM64_V8_BUILD OR (OQS_USE_ARM_NEON_INSTRUCTIONS AND OQS_USE_ARM_NEON_INSTRUCTIONS))
+    cmake_dependent_option(OQS_ENABLE_SIG_uov_ov_V_pkc_skc_neon "" ON "OQS_ENABLE_SIG_uov_ov_V_pkc_skc" OFF)
+endif()
+endif()
+
 ##### OQS_COPY_FROM_UPSTREAM_FRAGMENT_ADD_ENABLE_BY_ALG_CONDITIONAL_END
 
 ##### OQS_COPY_FROM_LIBJADE_FRAGMENT_ADD_ENABLE_BY_ALG_CONDITIONAL_START
