@@ -17,7 +17,7 @@ website: https://www.uovsig.org/
 nist-round: 1
 spec-version: NIST Round 2 (February 2025)
 primary-upstream:
-  source: https://github.com/pqov/pqov/commit/47a161b8ae9f959773cb79db8de13d4a6cdfd858
+  source: https://github.com/pqov/pqov/commit/37f5cb58dc81ae96d9374dce1a2ce7024a4a8f9e
   spdx-license-identifier: CC0 OR Apache-2.0
 parameter-sets:
 - name: OV-Is
@@ -53,6 +53,19 @@ parameter-sets:
     - AES: liboqs
     no-secret-dependent-branching-claimed: true
     no-secret-dependent-branching-checked-by-valgrind: true
+    large-stack-usage: false
+  - upstream: primary-upstream
+    upstream-id: neon
+    supported-platforms:
+    - architecture: ARM64_V8
+      operating_systems:
+      - Linux
+      - Darwin
+    common-crypto:
+    - SHA3: liboqs
+    - AES: liboqs
+    no-secret-dependent-branching-claimed: true
+    no-secret-dependent-branching-checked-by-valgrind: false
     large-stack-usage: false
 - name: OV-III
   claimed-nist-level: 3

@@ -252,6 +252,7 @@
 #cmakedefine OQS_ENABLE_SIG_UOV 1
 #cmakedefine OQS_ENABLE_SIG_uov_ov_Is 1
 #cmakedefine OQS_ENABLE_SIG_uov_ov_Ip 1
+#cmakedefine OQS_ENABLE_SIG_uov_ov_Ip_neon 1
 #cmakedefine OQS_ENABLE_SIG_uov_ov_III 1
 #cmakedefine OQS_ENABLE_SIG_uov_ov_V 1
 #cmakedefine OQS_ENABLE_SIG_uov_ov_Is_pkc 1

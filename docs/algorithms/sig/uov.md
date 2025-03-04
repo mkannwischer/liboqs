@@ -6,7 +6,7 @@
 - **Authors' website**: https://www.uovsig.org/
 - **Specification version**: NIST Round 2 (February 2025).
 - **Primary Source**<a name="primary-source"></a>:
-  - **Source**: https://github.com/pqov/pqov/commit/47a161b8ae9f959773cb79db8de13d4a6cdfd858
+  - **Source**: https://github.com/pqov/pqov/commit/37f5cb58dc81ae96d9374dce1a2ce7024a4a8f9e
   - **Implementation license (SPDX-Identifier)**: CC0 OR Apache-2.0
 
 
@@ -42,6 +42,7 @@ Are implementations chosen based on runtime CPU feature detection? **Yes**.
 |       Implementation source       | Identifier in upstream   | Supported architecture(s)   | Supported operating system(s)   | CPU extension(s) used   | No branching-on-secrets claimed?   | No branching-on-secrets checked by valgrind?   | Large stack usage?   |
 |:---------------------------------:|:-------------------------|:----------------------------|:--------------------------------|:------------------------|:-----------------------------------|:-----------------------------------------------|:---------------------|
 | [Primary Source](#primary-source) | ref                      | All                         | All                             | None                    | True                               | True                                           | False                |
+| [Primary Source](#primary-source) | neon                     | ARM64\_V8                   | Linux,Darwin                    | None                    | True                               | False                                          | False                |
 
 Are implementations chosen based on runtime CPU feature detection? **Yes**.
 
