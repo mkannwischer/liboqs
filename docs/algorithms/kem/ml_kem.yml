@@ -17,7 +17,7 @@ website: https://pq-crystals.org/kyber/ and https://csrc.nist.gov/pubs/fips/203
 nist-round: FIPS203
 spec-version: ML-KEM
 primary-upstream:
-  source: https://github.com/pq-code-package/mlkem-native/commit/09bb1790bf9d38e1714f39af789306f28cdd395d
+  source: https://github.com/pq-code-package/mlkem-native/commit/2b943f92c6f78679690921a62e5c5855cc42035c
   spdx-license-identifier: CC0-1.0 or Apache-2.0
 optimized-upstreams:
   cupqc-cuda:
