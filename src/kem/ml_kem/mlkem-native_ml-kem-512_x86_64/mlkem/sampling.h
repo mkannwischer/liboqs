@@ -1,7 +1,17 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
+
+/* References
+ * ==========
+ *
+ * - [FIPS203]
+ *   FIPS 203 Module-Lattice-Based Key-Encapsulation Mechanism Standard
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/pubs/fips/203/final
+ */
+
 #ifndef MLK_SAMPLING_H
 #define MLK_SAMPLING_H
 
@@ -22,13 +32,13 @@
  * Arguments:   - mlk_poly *r: pointer to output polynomial
  *              - const uint8_t *buf: pointer to input byte array
  *
- * Specification: Implements [FIPS 203, Algorithm 8, SamplePolyCBD_2]
+ * Specification: Implements @[FIPS203, Algorithm 8, SamplePolyCBD_2]
  *
  **************************************************/
 MLK_INTERNAL_API
 void mlk_poly_cbd2(mlk_poly *r, const uint8_t buf[2 * MLKEM_N / 4]);
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_ETA1 == 3
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_ETA1 == 3
 #define mlk_poly_cbd3 MLK_NAMESPACE(poly_cbd3)
 /*************************************************
  * Name:        mlk_poly_cbd3
@@ -41,12 +51,12 @@ void mlk_poly_cbd2(mlk_poly *r, const uint8_t buf[2 * MLKEM_N / 4]);
  * Arguments:   - mlk_poly *r: pointer to output polynomial
  *              - const uint8_t *buf: pointer to input byte array
  *
- * Specification: Implements [FIPS 203, Algorithm 8, SamplePolyCBD_3]
+ * Specification: Implements @[FIPS203, Algorithm 8, SamplePolyCBD_3]
  *
  **************************************************/
 MLK_INTERNAL_API
 void mlk_poly_cbd3(mlk_poly *r, const uint8_t buf[3 * MLKEM_N / 4]);
-#endif /* MLK_MULTILEVEL_BUILD || MLKEM_ETA1 == 3 */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_ETA1 == 3 */
 
 #define mlk_poly_rej_uniform_x4 MLK_NAMESPACE(poly_rej_uniform_x4)
 /*************************************************
@@ -55,24 +65,21 @@ void mlk_poly_cbd3(mlk_poly *r, const uint8_t buf[3 * MLKEM_N / 4]);
  * Description: Generate four polynomials using rejection sampling
  *              on (pseudo-)uniformly random bytes sampled from a seed.
  *
- * Arguments:   - mlk_poly *vec:           Pointer to an array of 4 polynomials
- *                                     to be sampled.
- *              - uint8_t *seed[4]:    Pointer to array of four pointers
- *                                     pointing to the seed buffers of size
- *                                     MLKEM_SYMBYTES + 2 each.
+ * Arguments:   - mlk_poly *vec:
+ *                Pointer to an array of 4 polynomials to be sampled.
+ *              - uint8_t seed[4][MLK_ALIGN_UP(MLKEM_SYMBYTES + 2)]:
+ *                Pointer consecutive array of seed buffers of size
+ *                MLKEM_SYMBYTES + 2 each, plus padding for alignment.
  *
- * Specification: Implements [FIPS 203, Algorithm 7, SampleNTT]
+ * Specification: Implements @[FIPS203, Algorithm 7, SampleNTT]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_poly_rej_uniform_x4(mlk_poly *vec, uint8_t *seed[4])
+void mlk_poly_rej_uniform_x4(mlk_poly *vec,
+                             uint8_t seed[4][MLK_ALIGN_UP(MLKEM_SYMBYTES + 2)])
 __contract__(
   requires(memory_no_alias(vec, sizeof(mlk_poly) * 4))
-  requires(memory_no_alias(seed, sizeof(uint8_t*) * 4))
-  requires(memory_no_alias(seed[0], MLKEM_SYMBYTES + 2))
-  requires(memory_no_alias(seed[1], MLKEM_SYMBYTES + 2))
-  requires(memory_no_alias(seed[2], MLKEM_SYMBYTES + 2))
-  requires(memory_no_alias(seed[3], MLKEM_SYMBYTES + 2))
+  requires(memory_no_alias(seed, 4 * MLK_ALIGN_UP(MLKEM_SYMBYTES + 2)))
   assigns(memory_slice(vec, sizeof(mlk_poly) * 4))
   ensures(array_bound(vec[0].coeffs, 0, MLKEM_N, 0, MLKEM_Q))
   ensures(array_bound(vec[1].coeffs, 0, MLKEM_N, 0, MLKEM_Q))
@@ -90,7 +97,7 @@ __contract__(
  *              - uint8_t *seed:       Pointer to seed buffer of size
  *                                     MLKEM_SYMBYTES + 2 each.
  *
- * Specification: Implements [FIPS 203, Algorithm 7, SampleNTT]
+ * Specification: Implements @[FIPS203, Algorithm 7, SampleNTT]
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -101,4 +108,4 @@ __contract__(
   assigns(memory_slice(entry, sizeof(mlk_poly)))
   ensures(array_bound(entry->coeffs, 0, MLKEM_N, 0, MLKEM_Q)));
 
-#endif /* MLK_SAMPLING_H */
+#endif /* !MLK_SAMPLING_H */

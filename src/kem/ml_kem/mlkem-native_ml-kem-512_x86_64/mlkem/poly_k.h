@@ -1,7 +1,17 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
+
+/* References
+ * ==========
+ *
+ * - [FIPS203]
+ *   FIPS 203 Module-Lattice-Based Key-Encapsulation Mechanism Standard
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/pubs/fips/203/final
+ */
+
 #ifndef MLK_POLY_K_H
 #define MLK_POLY_K_H
 
@@ -10,17 +20,18 @@
 #include "compress.h"
 #include "poly.h"
 
-#define mlk_polyvec MLK_ADD_LEVEL(mlk_polyvec)
-typedef struct
-{
-  mlk_poly vec[MLKEM_K];
-} MLK_ALIGN mlk_polyvec;
+/* Parameter set namespacing
+ * This is to facilitate building multiple instances
+ * of mlkem-native (e.g. with varying parameter sets)
+ * within a single compilation unit. */
+#define mlk_polyvec MLK_ADD_PARAM_SET(mlk_polyvec)
+#define mlk_polymat MLK_ADD_PARAM_SET(mlk_polymat)
+#define mlk_polyvec_mulcache MLK_ADD_PARAM_SET(mlk_polyvec_mulcache)
+/* End of parameter set namespacing */
 
-#define mlk_polyvec_mulcache MLK_ADD_LEVEL(mlk_polyvec_mulcache)
-typedef struct
-{
-  mlk_poly_mulcache vec[MLKEM_K];
-} mlk_polyvec_mulcache;
+typedef mlk_poly mlk_polyvec[MLKEM_K];
+typedef mlk_poly mlk_polymat[MLKEM_K * MLKEM_K];
+typedef mlk_poly_mulcache mlk_polyvec_mulcache[MLKEM_K];
 
 #define mlk_poly_compress_du MLK_NAMESPACE_K(poly_compress_du)
 /*************************************************
@@ -36,8 +47,8 @@ typedef struct
  *                  i.e. in [0,1,..,MLKEM_Q-1].
  *
  * Specification: Implements `ByteEncode_{d_u} (Compress_{d_u} (u))`
- *                in [FIPS 203, Algorithm 14 (K-PKE.Encrypt), L22],
- *                with level-specific d_u defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 14 (K-PKE.Encrypt), L22],
+ *                with level-specific d_u defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DU here.
  *
  **************************************************/
@@ -73,8 +84,8 @@ __contract__(
  * (non-negative and smaller than MLKEM_Q).
  *
  * Specification: Implements `Decompress_{d_u} (ByteDecode_{d_u} (u))`
- *                in [FIPS 203, Algorithm 15 (K-PKE.Decrypt), L3].
- *                with level-specific d_u defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 15 (K-PKE.Decrypt), L3].
+ *                with level-specific d_u defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DU here.
  *
  **************************************************/
@@ -109,8 +120,8 @@ __contract__(
  *                  i.e. in [0,1,..,MLKEM_Q-1].
  *
  * Specification: Implements `ByteEncode_{d_v} (Compress_{d_v} (v))`
- *                in [FIPS 203, Algorithm 14 (K-PKE.Encrypt), L23].
- *                with level-specific d_v defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 14 (K-PKE.Encrypt), L23].
+ *                with level-specific d_v defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DV here.
  *
  **************************************************/
@@ -147,8 +158,8 @@ __contract__(
  * (non-negative and smaller than MLKEM_Q).
  *
  * Specification: Implements `Decompress_{d_v} (ByteDecode_{d_v} (v))`
- *                in [FIPS 203, Algorithm 15 (K-PKE.Decrypt), L4].
- *                with level-specific d_v defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 15 (K-PKE.Decrypt), L4].
+ *                with level-specific d_v defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DV here.
  *
  **************************************************/
@@ -177,24 +188,24 @@ __contract__(
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
  *                            (needs space for MLKEM_POLYVECCOMPRESSEDBYTES_DU)
- *              - const mlk_polyvec *a: pointer to input vector of polynomials.
+ *              - const mlk_polyvec a: pointer to input vector of polynomials.
  *                                  Coefficients must be unsigned canonical,
  *                                  i.e. in [0,1,..,MLKEM_Q-1].
  *
  * Specification: Implements `ByteEncode_{d_u} (Compress_{d_u} (u))`
- *                in [FIPS 203, Algorithm 14 (K-PKE.Encrypt), L22].
- *                with level-specific d_u defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 14 (K-PKE.Encrypt), L22].
+ *                with level-specific d_u defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DU here.
  *
  **************************************************/
 MLK_INTERNAL_API
 void mlk_polyvec_compress_du(uint8_t r[MLKEM_POLYVECCOMPRESSEDBYTES_DU],
-                             const mlk_polyvec *a)
+                             const mlk_polyvec a)
 __contract__(
   requires(memory_no_alias(r, MLKEM_POLYVECCOMPRESSEDBYTES_DU))
   requires(memory_no_alias(a, sizeof(mlk_polyvec)))
   requires(forall(k0, 0, MLKEM_K,
-         array_bound(a->vec[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
+         array_bound(a[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
   assigns(object_whole(r))
 );
 
@@ -205,26 +216,26 @@ __contract__(
  * Description: De-serialize and decompress vector of polynomials;
  *              approximate inverse of mlk_polyvec_compress_du
  *
- * Arguments:   - mlk_polyvec *r:       pointer to output vector of polynomials.
+ * Arguments:   - mlk_polyvec r:       pointer to output vector of polynomials.
  *                Output will have coefficients normalized to [0,..,q-1].
  *              - const uint8_t *a: pointer to input byte array
  *                                  (of length MLKEM_POLYVECCOMPRESSEDBYTES_DU)
  *
  * Specification: Implements `Decompress_{d_u} (ByteDecode_{d_u} (u))`
- *                in [FIPS 203, Algorithm 15 (K-PKE.Decrypt), L3].
- *                with level-specific d_u defined in [FIPS 203, Table 2],
+ *                in @[FIPS203, Algorithm 15 (K-PKE.Decrypt), L3].
+ *                with level-specific d_u defined in @[FIPS203, Table 2],
  *                and given by MLKEM_DU here.
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_decompress_du(mlk_polyvec *r,
+void mlk_polyvec_decompress_du(mlk_polyvec r,
                                const uint8_t a[MLKEM_POLYVECCOMPRESSEDBYTES_DU])
 __contract__(
   requires(memory_no_alias(a, MLKEM_POLYVECCOMPRESSEDBYTES_DU))
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   assigns(object_whole(r))
   ensures(forall(k0, 0, MLKEM_K,
-         array_bound(r->vec[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
+         array_bound(r[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
 );
 
 #define mlk_polyvec_tobytes MLK_NAMESPACE_K(polyvec_tobytes)
@@ -235,22 +246,22 @@ __contract__(
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
  *                            (needs space for MLKEM_POLYVECBYTES)
- *              - const mlk_polyvec *a: pointer to input vector of polynomials
+ *              - const mlk_polyvec a: pointer to input vector of polynomials
  *                  Each polynomial must have coefficients in [0,..,q-1].
  *
- * Specification: Implements ByteEncode_12 [FIPS 203, Algorithm 5].
+ * Specification: Implements ByteEncode_12 @[FIPS203, Algorithm 5].
  *                Extended to vectors as per
- *                [FIPS 203, 2.4.8 Applying Algorithms to Arrays]
- *                and [FIPS 203, 2.4.6, Matrices and Vectors]
+ *                @[FIPS203, 2.4.8 Applying Algorithms to Arrays]
+ *                and @[FIPS203, 2.4.6, Matrices and Vectors]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_tobytes(uint8_t r[MLKEM_POLYVECBYTES], const mlk_polyvec *a)
+void mlk_polyvec_tobytes(uint8_t r[MLKEM_POLYVECBYTES], const mlk_polyvec a)
 __contract__(
   requires(memory_no_alias(a, sizeof(mlk_polyvec)))
   requires(memory_no_alias(r, MLKEM_POLYVECBYTES))
   requires(forall(k0, 0, MLKEM_K,
-         array_bound(a->vec[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
+         array_bound(a[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
   assigns(object_whole(r))
 );
 
@@ -261,25 +272,25 @@ __contract__(
  * Description: De-serialize vector of polynomials;
  *              inverse of mlk_polyvec_tobytes
  *
- * Arguments:   - const mlk_polyvec *a: pointer to output vector of polynomials
+ * Arguments:   - const mlk_polyvec a: pointer to output vector of polynomials
  *                 (of length MLKEM_POLYVECBYTES). Output will have coefficients
  *                 normalized in [0..4095].
  *              - uint8_t *r: pointer to input byte array
  *
- * Specification: Implements ByteDecode_12 [FIPS 203, Algorithm 6].
+ * Specification: Implements ByteDecode_12 @[FIPS203, Algorithm 6].
  *                Extended to vectors as per
- *                [FIPS 203, 2.4.8 Applying Algorithms to Arrays]
- *                and [FIPS 203, 2.4.6, Matrices and Vectors]
+ *                @[FIPS203, 2.4.8 Applying Algorithms to Arrays]
+ *                and @[FIPS203, 2.4.6, Matrices and Vectors]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_frombytes(mlk_polyvec *r, const uint8_t a[MLKEM_POLYVECBYTES])
+void mlk_polyvec_frombytes(mlk_polyvec r, const uint8_t a[MLKEM_POLYVECBYTES])
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   requires(memory_no_alias(a, MLKEM_POLYVECBYTES))
   assigns(object_whole(r))
   ensures(forall(k0, 0, MLKEM_K,
-        array_bound(r->vec[k0].coeffs, 0, MLKEM_N, 0, MLKEM_UINT12_LIMIT)))
+        array_bound(r[k0].coeffs, 0, MLKEM_N, 0, MLKEM_UINT12_LIMIT)))
 );
 
 #define mlk_polyvec_ntt MLK_NAMESPACE_K(polyvec_ntt)
@@ -294,22 +305,22 @@ __contract__(
  *              The output polynomial is in bitreversed order, and
  *              coefficient-wise bound by MLK_NTT_BOUND in absolute value.
  *
- * Arguments:   - mlk_polyvec *r: pointer to in/output vector of polynomials
+ * Arguments:   - mlk_polyvec r: pointer to in/output vector of polynomials
  *
  * Specification:
- * - Implements [FIPS 203, Algorithm 9, NTT]
- * - Extended to vectors as per [FIPS 203, 2.4.6, Matrices and Vectors]
+ * - Implements @[FIPS203, Algorithm 9, NTT]
+ * - Extended to vectors as per @[FIPS203, 2.4.6, Matrices and Vectors]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_ntt(mlk_polyvec *r)
+void mlk_polyvec_ntt(mlk_polyvec r)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   requires(forall(j, 0, MLKEM_K,
-  array_abs_bound(r->vec[j].coeffs, 0, MLKEM_N, MLKEM_Q)))
+  array_abs_bound(r[j].coeffs, 0, MLKEM_N, MLKEM_Q)))
   assigns(object_whole(r))
   ensures(forall(j, 0, MLKEM_K,
-  array_abs_bound(r->vec[j].coeffs, 0, MLKEM_N, MLK_NTT_BOUND)))
+  array_abs_bound(r[j].coeffs, 0, MLKEM_N, MLK_NTT_BOUND)))
 );
 
 #define mlk_polyvec_invntt_tomont MLK_NAMESPACE_K(polyvec_invntt_tomont)
@@ -325,20 +336,20 @@ __contract__(
  *              The output polynomial is in normal order, and
  *              coefficient-wise bound by MLK_INVNTT_BOUND in absolute value.
  *
- * Arguments:   - mlk_polyvec *r: pointer to in/output vector of polynomials
+ * Arguments:   - mlk_polyvec r: pointer to in/output vector of polynomials
  *
  * Specification:
- * - Implements [FIPS 203, Algorithm 10, NTT^{-1}]
- * - Extended to vectors as per [FIPS 203, 2.4.6, Matrices and Vectors]
+ * - Implements @[FIPS203, Algorithm 10, NTT^{-1}]
+ * - Extended to vectors as per @[FIPS203, 2.4.6, Matrices and Vectors]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_invntt_tomont(mlk_polyvec *r)
+void mlk_polyvec_invntt_tomont(mlk_polyvec r)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   assigns(object_whole(r))
   ensures(forall(j, 0, MLKEM_K,
-  array_abs_bound(r->vec[j].coeffs, 0, MLKEM_N, MLK_INVNTT_BOUND)))
+  array_abs_bound(r[j].coeffs, 0, MLKEM_N, MLK_INVNTT_BOUND)))
 );
 
 #define mlk_polyvec_basemul_acc_montgomery_cached \
@@ -354,30 +365,30 @@ __contract__(
  *              - No bounds guarantees for the coefficients in the result.
  *
  * Arguments:   - mlk_poly *r: pointer to output polynomial
- *              - const mlk_polyvec *a: pointer to first input polynomial vector
- *              - const mlk_polyvec *b: pointer to second input polynomial
- *vector
- *              - const mlk_polyvec_mulcache *b_cache: pointer to mulcache
+ *              - const mlk_polyvec a: pointer to first input polynomial vector
+ *              - const mlk_polyvec b: pointer to second input polynomial
+ *                vector
+ *              - const mlk_polyvec_mulcache b_cache: pointer to mulcache
  *                  for second input polynomial vector. Can be computed
  *                  via mlk_polyvec_mulcache_compute().
  *
  * Specification: Implements
- *                - [FIPS 203, Section 2.4.7, Eq (2.14)]
- *                - [FIPS 203, Algorithm 11, MultiplyNTTs]
- *                - [FIPS 203, Algorithm 12, BaseCaseMultiply]
+ *                - @[FIPS203, Section 2.4.7, Eq (2.14)]
+ *                - @[FIPS203, Algorithm 11, MultiplyNTTs]
+ *                - @[FIPS203, Algorithm 12, BaseCaseMultiply]
  *
  **************************************************/
 MLK_INTERNAL_API
 void mlk_polyvec_basemul_acc_montgomery_cached(
-    mlk_poly *r, const mlk_polyvec *a, const mlk_polyvec *b,
-    const mlk_polyvec_mulcache *b_cache)
+    mlk_poly *r, const mlk_polyvec a, const mlk_polyvec b,
+    const mlk_polyvec_mulcache b_cache)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_poly)))
   requires(memory_no_alias(a, sizeof(mlk_polyvec)))
   requires(memory_no_alias(b, sizeof(mlk_polyvec)))
   requires(memory_no_alias(b_cache, sizeof(mlk_polyvec_mulcache)))
   requires(forall(k1, 0, MLKEM_K,
-     array_bound(a->vec[k1].coeffs, 0, MLKEM_N, 0, MLKEM_UINT12_LIMIT)))
+     array_bound(a[k1].coeffs, 0, MLKEM_N, 0, MLKEM_UINT12_LIMIT)))
   assigns(object_whole(r))
 );
 
@@ -403,7 +414,7 @@ __contract__(
  *            - a: Pointer to input polynomial vector
  *
  * Specification:
- * - Caches `b_1 * \gamma` in [FIPS 203, Algorithm 12, BaseCaseMultiply, L1]
+ * - Caches `b_1 * \gamma` in @[FIPS203, Algorithm 12, BaseCaseMultiply, L1]
  *
  ************************************************************/
 /*
@@ -412,7 +423,7 @@ __contract__(
  * higher level safety proofs, and thus not part of the spec.
  */
 MLK_INTERNAL_API
-void mlk_polyvec_mulcache_compute(mlk_polyvec_mulcache *x, const mlk_polyvec *a)
+void mlk_polyvec_mulcache_compute(mlk_polyvec_mulcache x, const mlk_polyvec a)
 __contract__(
   requires(memory_no_alias(x, sizeof(mlk_polyvec_mulcache)))
   requires(memory_no_alias(a, sizeof(mlk_polyvec)))
@@ -427,10 +438,10 @@ __contract__(
  *              of each element of a vector of polynomials;
  *              for details of the Barrett reduction see comments in reduce.c
  *
- * Arguments:   - mlk_polyvec *r: pointer to input/output polynomial
+ * Arguments:   - mlk_polyvec r: pointer to input/output polynomial
  *
  * Specification: Normalizes on unsigned canoncial representatives
- *                ahead of calling [FIPS 203, Compress_d, Eq (4.7)].
+ *                ahead of calling @[FIPS203, Compress_d, Eq (4.7)].
  *                This is not made explicit in FIPS 203.
  *
  **************************************************/
@@ -442,12 +453,12 @@ __contract__(
  *       use of mlk_poly_reduce() in the context of (de)serialization.
  */
 MLK_INTERNAL_API
-void mlk_polyvec_reduce(mlk_polyvec *r)
+void mlk_polyvec_reduce(mlk_polyvec r)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   assigns(object_whole(r))
   ensures(forall(k0, 0, MLKEM_K,
-    array_bound(r->vec[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
+    array_bound(r[k0].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
 );
 
 #define mlk_polyvec_add MLK_NAMESPACE_K(polyvec_add)
@@ -456,10 +467,10 @@ __contract__(
  *
  * Description: Add vectors of polynomials
  *
- * Arguments: - mlk_polyvec *r: pointer to input-output vector of polynomials to
- *be added to
- *            - const mlk_polyvec *b: pointer to second input vector of
- *polynomials
+ * Arguments: - mlk_polyvec r: pointer to input-output vector of polynomials to
+ *              be added to
+ *            - const mlk_polyvec b: pointer to second input vector of
+ *              polynomials
  *
  * The coefficients of r and b must be so that the addition does
  * not overflow. Otherwise, the behaviour of this function is undefined.
@@ -469,21 +480,21 @@ __contract__(
  * ensures clause is required on this function.
  *
  * Specification:
- * - [FIPS 203, 2.4.5, Arithmetic With Polynomials and NTT Representations]
- * - Used in [FIPS 203, Algorithm 14 (K-PKE.Encrypt), L19]
+ * - @[FIPS203, 2.4.5, Arithmetic With Polynomials and NTT Representations]
+ * - Used in @[FIPS203, Algorithm 14 (K-PKE.Encrypt), L19]
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_add(mlk_polyvec *r, const mlk_polyvec *b)
+void mlk_polyvec_add(mlk_polyvec r, const mlk_polyvec b)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   requires(memory_no_alias(b, sizeof(mlk_polyvec)))
   requires(forall(j0, 0, MLKEM_K,
           forall(k0, 0, MLKEM_N,
-            (int32_t)r->vec[j0].coeffs[k0] + b->vec[j0].coeffs[k0] <= INT16_MAX)))
+            (int32_t)r[j0].coeffs[k0] + b[j0].coeffs[k0] <= INT16_MAX)))
   requires(forall(j1, 0, MLKEM_K,
           forall(k1, 0, MLKEM_N,
-            (int32_t)r->vec[j1].coeffs[k1] + b->vec[j1].coeffs[k1] >= INT16_MIN)))
+            (int32_t)r[j1].coeffs[k1] + b[j1].coeffs[k1] >= INT16_MIN)))
   assigns(object_whole(r))
 );
 
@@ -499,17 +510,17 @@ __contract__(
  *
  * Specification: Internal normalization required in `mlk_indcpa_keypair_derand`
  *                as part of matrix-vector multiplication
- *                [FIPS 203, Algorithm 13, K-PKE.KeyGen, L18].
+ *                @[FIPS203, Algorithm 13, K-PKE.KeyGen, L18].
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_polyvec_tomont(mlk_polyvec *r)
+void mlk_polyvec_tomont(mlk_polyvec r)
 __contract__(
   requires(memory_no_alias(r, sizeof(mlk_polyvec)))
   assigns(memory_slice(r, sizeof(mlk_polyvec)))
   assigns(object_whole(r))
   ensures(forall(j, 0, MLKEM_K,
-    array_abs_bound(r->vec[j].coeffs, 0, MLKEM_N, MLKEM_Q)))
+    array_abs_bound(r[j].coeffs, 0, MLKEM_N, MLKEM_Q)))
 );
 
 #define mlk_poly_getnoise_eta1_4x MLK_NAMESPACE_K(poly_getnoise_eta1_4x)
@@ -527,11 +538,11 @@ __contract__(
  *
  * Specification:
  * Implements 4x `SamplePolyCBD_{eta1} (PRF_{eta1} (sigma, N))`:
- * - [FIPS 203, Algorithm 8, SamplePolyCBD_eta]
- * - [FIPS 203, Eq (4.3), PRF_eta]
+ * - @[FIPS203, Algorithm 8, SamplePolyCBD_eta]
+ * - @[FIPS203, Eq (4.3), PRF_eta]
  * - `SamplePolyCBD_{eta1} (PRF_{eta1} (sigma, N))` appears in
- *   [FIPS 203, Algorithm 13, K-PKE.KeyGen, L{9, 13}]
- *   [FIPS 203, Algorithm 14, K-PKE.Encrypt, L10]
+ *   @[FIPS203, Algorithm 13, K-PKE.KeyGen, L{9, 13}]
+ *   @[FIPS203, Algorithm 14, K-PKE.Encrypt, L10]
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -539,18 +550,12 @@ void mlk_poly_getnoise_eta1_4x(mlk_poly *r0, mlk_poly *r1, mlk_poly *r2,
                                mlk_poly *r3, const uint8_t seed[MLKEM_SYMBYTES],
                                uint8_t nonce0, uint8_t nonce1, uint8_t nonce2,
                                uint8_t nonce3)
-/* Depending on MLKEM_K, the pointers passed to this function belong
-   to the same objects, so we cannot use memory_no_alias for r0-r3.
-
-   NOTE: Somehow it is important to use memory_no_alias() first in the
-         conjunctions defining each case.
-*/
-#if MLKEM_K == 2
 __contract__(
   requires(memory_no_alias(seed, MLKEM_SYMBYTES))
-  requires( /* Case A: r0, r1 consecutive, r2, r3 consecutive */
-    (memory_no_alias(r0, 2 * sizeof(mlk_poly)) && memory_no_alias(r2, 2 * sizeof(mlk_poly)) &&
-     r1 == r0 + 1 && r3 == r2 + 1 && !same_object(r0, r2)))
+  requires(memory_no_alias(r0, sizeof(mlk_poly)))
+  requires(memory_no_alias(r1, sizeof(mlk_poly)))
+  requires(memory_no_alias(r2, sizeof(mlk_poly)))
+  requires(memory_no_alias(r3, sizeof(mlk_poly)))
   assigns(memory_slice(r0, sizeof(mlk_poly)))
   assigns(memory_slice(r1, sizeof(mlk_poly)))
   assigns(memory_slice(r2, sizeof(mlk_poly)))
@@ -561,38 +566,6 @@ __contract__(
     && array_abs_bound(r2->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
     && array_abs_bound(r3->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1));
 );
-#elif MLKEM_K == 4
-__contract__(
-  requires(memory_no_alias(seed, MLKEM_SYMBYTES))
-  requires( /* Case B: r0, r1, r2, r3 consecutive */
-    (memory_no_alias(r0, 4 * sizeof(mlk_poly)) && r1 == r0 + 1 && r2 == r0 + 2 && r3 == r0 + 3))
-  assigns(memory_slice(r0, sizeof(mlk_poly)))
-  assigns(memory_slice(r1, sizeof(mlk_poly)))
-  assigns(memory_slice(r2, sizeof(mlk_poly)))
-  assigns(memory_slice(r3, sizeof(mlk_poly)))
-  ensures(
-    array_abs_bound(r0->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r1->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r2->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r3->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1));
-);
-#elif MLKEM_K == 3
-__contract__(
-  requires(memory_no_alias(seed, MLKEM_SYMBYTES))
-  requires( /* Case C: r0, r1, r2 consecutive */
- (memory_no_alias(r0, 3 * sizeof(mlk_poly)) && memory_no_alias(r3, 1 * sizeof(mlk_poly)) &&
-  r1 == r0 + 1 && r2 == r0 + 2 && !same_object(r3, r0)))
-  assigns(memory_slice(r0, sizeof(mlk_poly)))
-  assigns(memory_slice(r1, sizeof(mlk_poly)))
-  assigns(memory_slice(r2, sizeof(mlk_poly)))
-  assigns(memory_slice(r3, sizeof(mlk_poly)))
-  ensures(
-    array_abs_bound(r0->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r1->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r2->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1)
-    && array_abs_bound(r3->coeffs,0, MLKEM_N, MLKEM_ETA1 + 1));
-);
-#endif /* MLKEM_K */
 
 #if MLKEM_ETA1 == MLKEM_ETA2
 /*
@@ -619,10 +592,10 @@ __contract__(
  *
  * Specification:
  * Implements `SamplePolyCBD_{eta2} (PRF_{eta2} (sigma, N))`:
- * - [FIPS 203, Algorithm 8, SamplePolyCBD_eta]
- * - [FIPS 203, Eq (4.3), PRF_eta]
+ * - @[FIPS203, Algorithm 8, SamplePolyCBD_eta]
+ * - @[FIPS203, Eq (4.3), PRF_eta]
  * - `SamplePolyCBD_{eta2} (PRF_{eta2} (sigma, N))` appears in
- *   [FIPS 203, Algorithm 14, K-PKE.Encrypt, L14]
+ *   @[FIPS203, Algorithm 14, K-PKE.Encrypt, L14]
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -654,10 +627,10 @@ __contract__(
  * Implements two instances each of
  * `SamplePolyCBD_{eta1} (PRF_{eta1} (sigma, N))` and
  * `SamplePolyCBD_{eta2} (PRF_{eta2} (sigma, N))`:
- * - [FIPS 203, Algorithm 8, SamplePolyCBD_eta]
- * - [FIPS 203, Eq (4.3), PRF_eta]
+ * - @[FIPS203, Algorithm 8, SamplePolyCBD_eta]
+ * - @[FIPS203, Eq (4.3), PRF_eta]
  * - `SamplePolyCBD_{eta2} (PRF_{eta2} (sigma, N))` appears in
- *   [FIPS 203, Algorithm 14, K-PKE.Encrypt, L14]
+ *   @[FIPS203, Algorithm 14, K-PKE.Encrypt, L14]
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -679,4 +652,4 @@ __contract__(
 );
 #endif /* MLKEM_K == 2 */
 
-#endif /* MLK_POLY_K_H */
+#endif /* !MLK_POLY_K_H */

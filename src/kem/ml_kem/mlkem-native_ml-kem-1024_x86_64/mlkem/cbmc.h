@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
 #ifndef MLK_CBMC_H
@@ -9,14 +9,12 @@
  * Basic replacements for __CPROVER_XXX contracts
  ***************************************************/
 
-#include "common.h"
-
 #ifndef CBMC
 
 #define __contract__(x)
 #define __loop__(x)
 
-#else /* CBMC _is_ defined, therefore we're doing proof */
+#else /* !CBMC */
 
 #define __contract__(x) x
 #define __loop__(x) x
@@ -131,12 +129,14 @@
 
 /* Wrapper around array_bound operating on absolute values.
  *
- * Note that since the absolute bound is inclusive, but the lower
- * bound in array_bound is inclusive, we have to raise it by 1.
+ * The absolute value bound `k` is exclusive.
+ *
+ * Note that since the lower bound in array_bound is inclusive, we have to
+ * raise it by 1 here.
  */
 #define array_abs_bound(arr, lb, ub, k) \
   array_bound((arr), (lb), (ub), -((int)(k)) + 1, (k))
 
-#endif
+#endif /* CBMC */
 
-#endif /* MLK_CBMC_H */
+#endif /* !MLK_CBMC_H */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
 #ifndef MLK_NATIVE_API_H
@@ -98,7 +98,10 @@ __contract__(
     "Invalid native profile: MLK_USE_NATIVE_NTT_CUSTOM_ORDER can only be \
 set if there are native implementations for NTT, invNTT, mulcache, basemul, \
 and to/from bytes conversions."
-#endif
+#endif /* !MLK_USE_NATIVE_NTT || !MLK_USE_NATIVE_INTT ||           \
+          !MLK_USE_NATIVE_POLY_MULCACHE_COMPUTE ||                 \
+          !MLK_USE_NATIVE_POLYVEC_BASEMUL_ACC_MONTGOMERY_CACHED || \
+          !MLK_USE_NATIVE_POLY_TOBYTES || !MLK_USE_NATIVE_POLY_FROMBYTES */
 
 /*************************************************
  * Name:        mlk_poly_permute_bitrev_to_custom
@@ -206,11 +209,12 @@ __contract__(
   requires(memory_no_alias(cache, sizeof(int16_t) * (MLKEM_N / 2)))
   requires(memory_no_alias(mlk_poly, sizeof(int16_t) * MLKEM_N))
   assigns(object_whole(cache))
+  ensures(array_abs_bound(cache, 0, MLKEM_N/2, MLKEM_Q))
 );
 #endif /* MLK_USE_NATIVE_POLY_MULCACHE_COMPUTE */
 
 #if defined(MLK_USE_NATIVE_POLYVEC_BASEMUL_ACC_MONTGOMERY_CACHED)
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 2
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_K == 2
 /*************************************************
  * Name:        poly_mulcache_compute_k2_native
  *
@@ -238,22 +242,12 @@ __contract__(
   requires(memory_no_alias(a, sizeof(int16_t) * 2 * MLKEM_N))
   requires(memory_no_alias(b, sizeof(int16_t) * 2 * MLKEM_N))
   requires(memory_no_alias(b_cache, sizeof(int16_t) * 2 * (MLKEM_N / 2)))
-  /* Because of https://github.com/diffblue/cbmc/issues/8570, we can't
-   * just use a single flattened array_bound(...) here.
-   *
-   * Once fixed, change to:
-   * ```
-   * requires(array_bound(a, 0, 2 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
-   * ```
-   */
-  requires(forall(kN, 0, 2,					  \
-              array_bound(&((int16_t(*)[MLKEM_N])(a))[kN][0], 0, MLKEM_N, \
-			  0, MLKEM_UINT12_LIMIT)))
+  requires(array_bound(a, 0, 2 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
   assigns(memory_slice(r, sizeof(int16_t) * MLKEM_N))
 );
-#endif /* MLK_MULTILEVEL_BUILD_WITH_SHARED || MLKEM_K == 2 */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 2 */
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 3
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_K == 3
 /*************************************************
  * Name:        poly_mulcache_compute_k3_native
  *
@@ -281,22 +275,12 @@ __contract__(
   requires(memory_no_alias(a, sizeof(int16_t) * 3 * MLKEM_N))
   requires(memory_no_alias(b, sizeof(int16_t) * 3 * MLKEM_N))
   requires(memory_no_alias(b_cache, sizeof(int16_t) * 3 * (MLKEM_N / 2)))
-  /* Because of https://github.com/diffblue/cbmc/issues/8570, we can't
-   * just use a single flattened array_bound(...) here.
-   *
-   * Once fixed, change to:
-   * ```
-   * requires(array_bound(a, 0, 3 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
-   * ```
-   */
-  requires(forall(kN, 0, 3,					  \
-              array_bound(&((int16_t(*)[MLKEM_N])(a))[kN][0], 0, MLKEM_N, \
-			  0, MLKEM_UINT12_LIMIT)))
+  requires(array_bound(a, 0, 3 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
   assigns(memory_slice(r, sizeof(int16_t) * MLKEM_N))
 );
-#endif /* MLK_MULTILEVEL_BUILD_WITH_SHARED || MLKEM_K == 3 */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 3 */
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 4
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_K == 4
 /*************************************************
  * Name:        poly_mulcache_compute_k4_native
  *
@@ -324,20 +308,10 @@ __contract__(
   requires(memory_no_alias(a, sizeof(int16_t) * 4 * MLKEM_N))
   requires(memory_no_alias(b, sizeof(int16_t) * 4 * MLKEM_N))
   requires(memory_no_alias(b_cache, sizeof(int16_t) * 4 * (MLKEM_N / 2)))
-  /* Because of https://github.com/diffblue/cbmc/issues/8570, we can't
-   * just use a single flattened array_bound(...) here.
-   *
-   * Once fixed, change to:
-   * ```
-   * requires(array_bound(a, 0, 4 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
-   * ```
-   */
-  requires(forall(kN, 0, 4,					  \
-              array_bound(&((int16_t(*)[MLKEM_N])(a))[kN][0], 0, MLKEM_N, \
-			  0, MLKEM_UINT12_LIMIT)))
+  requires(array_bound(a, 0, 4 * MLKEM_N, 0, MLKEM_UINT12_LIMIT))
   assigns(memory_slice(r, sizeof(int16_t) * MLKEM_N))
 );
-#endif /* MLK_MULTILEVEL_BUILD_WITH_SHARED || MLKEM_K == 4 */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 4 */
 #endif /* MLK_USE_NATIVE_POLYVEC_BASEMUL_ACC_MONTGOMERY_CACHED */
 
 #if defined(MLK_USE_NATIVE_POLY_TOBYTES)
@@ -420,7 +394,7 @@ __contract__(
 );
 #endif /* MLK_USE_NATIVE_REJ_UNIFORM */
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || (MLKEM_K == 2 || MLKEM_K == 3)
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || (MLKEM_K == 2 || MLKEM_K == 3)
 #if defined(MLK_USE_NATIVE_POLY_COMPRESS_D4)
 /*************************************************
  * Name:        mlk_poly_compress_d4_native
@@ -492,10 +466,9 @@ static MLK_INLINE void mlk_poly_decompress_d4_native(
 static MLK_INLINE void mlk_poly_decompress_d10_native(
     int16_t r[MLKEM_N], const uint8_t a[MLKEM_POLYCOMPRESSEDBYTES_D10]);
 #endif /* MLK_USE_NATIVE_POLY_DECOMPRESS_D10 */
-#endif /* defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || (MLKEM_K == 2 \
-          || MLKEM_K == 3) */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 2 || MLKEM_K == 3 */
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 4
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_K == 4
 #if defined(MLK_USE_NATIVE_POLY_COMPRESS_D5)
 /*************************************************
  * Name:        mlk_poly_compress_d5_native
@@ -567,7 +540,6 @@ static MLK_INLINE void mlk_poly_decompress_d5_native(
 static MLK_INLINE void mlk_poly_decompress_d11_native(
     int16_t r[MLKEM_N], const uint8_t a[MLKEM_POLYCOMPRESSEDBYTES_D11]);
 #endif /* MLK_USE_NATIVE_POLY_DECOMPRESS_D11 */
-#endif /* defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 4 \
-        */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 4 */
 
-#endif /* MLK_NATIVE_API_H */
+#endif /* !MLK_NATIVE_API_H */

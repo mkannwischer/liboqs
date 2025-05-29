@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
 /*
@@ -10,8 +10,8 @@
 
 #include "../../../common.h"
 
-#if defined(MLK_ARITH_BACKEND_AARCH64_OPT) && \
-    !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
+#if defined(MLK_ARITH_BACKEND_AARCH64) && \
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
 
 #include <stdint.h>
 #include "arith_native_aarch64.h"
@@ -167,11 +167,8 @@ MLK_ALIGN const int16_t mlk_aarch64_zetas_mulcache_twisted_native[] = {
     -11566, 11566,
 };
 
-#else /* defined(MLK_ARITH_BACKEND_AARCH64_OPT) \
-          && !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) */
+#else /* MLK_ARITH_BACKEND_AARCH64 && !MLK_CONFIG_MULTILEVEL_NO_SHARED */
 
 MLK_EMPTY_CU(aarch64_zetas)
 
-
-#endif /* defined(MLK_ARITH_BACKEND_AARCH64_OPT) \
-          && !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) */
+#endif /* !(MLK_ARITH_BACKEND_AARCH64 && !MLK_CONFIG_MULTILEVEL_NO_SHARED) */

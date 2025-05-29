@@ -1,16 +1,30 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
-#include "common.h"
-#if !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
 
-#include "arith_backend.h"
+/* References
+ * ==========
+ *
+ * - [FIPS203]
+ *   FIPS 203 Module-Lattice-Based Key-Encapsulation Mechanism Standard
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/pubs/fips/203/final
+ *
+ * - [REF]
+ *   CRYSTALS-Kyber C reference implementation
+ *   Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schanck, Schwabe, Seiler, Stehlé
+ *   https://github.com/pq-crystals/kyber/tree/main/ref
+ */
+
+#include "common.h"
+#if !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
+
 #include "debug.h"
 #include "sampling.h"
 #include "symmetric.h"
 
-/* Reference: `rej_uniform()` in the reference implementation.
+/* Reference: `rej_uniform()` in the reference implementation @[REF].
  *            - Our signature differs from the reference implementation
  *              in that it adds the offset and always expects the base of the
  *              target buffer. This avoids shifting the buffer base in the
@@ -39,7 +53,7 @@ __contract__(
   while (ctr < target && pos + 3 <= buflen)
   __loop__(
     invariant(offset <= ctr && ctr <= target && pos <= buflen)
-    invariant(ctr > 0 ==> array_bound(r, 0, ctr, 0, MLKEM_Q)))
+    invariant(array_bound(r, 0, ctr, 0, MLKEM_Q)))
   {
     val0 = ((buf[pos + 0] >> 0) | ((uint16_t)buf[pos + 1] << 8)) & 0xFFF;
     val1 = ((buf[pos + 1] >> 4) | ((uint16_t)buf[pos + 2] << 4)) & 0xFFF;
@@ -89,7 +103,7 @@ __contract__(
  * is provided on how many bytes of the input buffer have been consumed.
  **************************************************/
 
-/* Reference: `rej_uniform()` in the reference implementation.
+/* Reference: `rej_uniform()` in the reference implementation @[REF].
  *            - Our signature differs from the reference implementation
  *              in that it adds the offset and always expects the base of the
  *              target buffer. This avoids shifting the buffer base in the
@@ -128,39 +142,35 @@ __contract__(
   ((12 * MLKEM_N / 8 * (1 << 12) / MLKEM_Q + MLK_XOF_RATE) / MLK_XOF_RATE)
 #endif
 
-/* Reference: Does not exist in reference implementation.
+/* Reference: Does not exist in the reference implementation @[REF].
  *            - x4-batched version of `rej_uniform()` from the
  *              reference implementation, leveraging x4-batched Keccak-f1600. */
 MLK_INTERNAL_API
-void mlk_poly_rej_uniform_x4(mlk_poly *vec, uint8_t *seed[4])
+void mlk_poly_rej_uniform_x4(mlk_poly *vec,
+                             uint8_t seed[4][MLK_ALIGN_UP(MLKEM_SYMBYTES + 2)])
 {
   /* Temporary buffers for XOF output before rejection sampling */
-  MLK_ALIGN uint8_t buf0[MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE];
-  MLK_ALIGN uint8_t buf1[MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE];
-  MLK_ALIGN uint8_t buf2[MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE];
-  MLK_ALIGN uint8_t buf3[MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE];
+  MLK_ALIGN uint8_t
+      buf[4][MLK_ALIGN_UP(MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE)];
 
   /* Tracks the number of coefficients we have already sampled */
   unsigned ctr[4];
   mlk_xof_x4_ctx statex;
   unsigned buflen;
 
-  /* seed is MLKEM_SYMBYTES + 2 bytes long, but padded to MLKEM_SYMBYTES + 16 */
   mlk_xof_x4_init(&statex);
-  mlk_xof_x4_absorb(&statex, seed[0], seed[1], seed[2], seed[3],
-                    MLKEM_SYMBYTES + 2);
+  mlk_xof_x4_absorb(&statex, seed, MLKEM_SYMBYTES + 2);
 
   /*
    * Initially, squeeze heuristic number of MLKEM_GEN_MATRIX_NBLOCKS.
    * This should generate the matrix entries with high probability.
    */
-  mlk_xof_x4_squeezeblocks(buf0, buf1, buf2, buf3, MLKEM_GEN_MATRIX_NBLOCKS,
-                           &statex);
+  mlk_xof_x4_squeezeblocks(buf, MLKEM_GEN_MATRIX_NBLOCKS, &statex);
   buflen = MLKEM_GEN_MATRIX_NBLOCKS * MLK_XOF_RATE;
-  ctr[0] = mlk_rej_uniform(vec[0].coeffs, MLKEM_N, 0, buf0, buflen);
-  ctr[1] = mlk_rej_uniform(vec[1].coeffs, MLKEM_N, 0, buf1, buflen);
-  ctr[2] = mlk_rej_uniform(vec[2].coeffs, MLKEM_N, 0, buf2, buflen);
-  ctr[3] = mlk_rej_uniform(vec[3].coeffs, MLKEM_N, 0, buf3, buflen);
+  ctr[0] = mlk_rej_uniform(vec[0].coeffs, MLKEM_N, 0, buf[0], buflen);
+  ctr[1] = mlk_rej_uniform(vec[1].coeffs, MLKEM_N, 0, buf[1], buflen);
+  ctr[2] = mlk_rej_uniform(vec[2].coeffs, MLKEM_N, 0, buf[2], buflen);
+  ctr[3] = mlk_rej_uniform(vec[3].coeffs, MLKEM_N, 0, buf[3], buflen);
 
   /*
    * So long as not all matrix entries have been generated, squeeze
@@ -170,8 +180,8 @@ void mlk_poly_rej_uniform_x4(mlk_poly *vec, uint8_t *seed[4])
   while (ctr[0] < MLKEM_N || ctr[1] < MLKEM_N || ctr[2] < MLKEM_N ||
          ctr[3] < MLKEM_N)
   __loop__(
-    assigns(ctr, statex, memory_slice(vec, sizeof(mlk_poly) * 4), object_whole(buf0),
-       object_whole(buf1), object_whole(buf2), object_whole(buf3))
+    assigns(ctr, statex, memory_slice(vec, sizeof(mlk_poly) * 4), object_whole(buf[0]),
+       object_whole(buf[1]), object_whole(buf[2]), object_whole(buf[3]))
     invariant(ctr[0] <= MLKEM_N && ctr[1] <= MLKEM_N)
     invariant(ctr[2] <= MLKEM_N && ctr[3] <= MLKEM_N)
     invariant(array_bound(vec[0].coeffs, 0, ctr[0], 0, MLKEM_Q))
@@ -179,21 +189,18 @@ void mlk_poly_rej_uniform_x4(mlk_poly *vec, uint8_t *seed[4])
     invariant(array_bound(vec[2].coeffs, 0, ctr[2], 0, MLKEM_Q))
     invariant(array_bound(vec[3].coeffs, 0, ctr[3], 0, MLKEM_Q)))
   {
-    mlk_xof_x4_squeezeblocks(buf0, buf1, buf2, buf3, 1, &statex);
-    ctr[0] = mlk_rej_uniform(vec[0].coeffs, MLKEM_N, ctr[0], buf0, buflen);
-    ctr[1] = mlk_rej_uniform(vec[1].coeffs, MLKEM_N, ctr[1], buf1, buflen);
-    ctr[2] = mlk_rej_uniform(vec[2].coeffs, MLKEM_N, ctr[2], buf2, buflen);
-    ctr[3] = mlk_rej_uniform(vec[3].coeffs, MLKEM_N, ctr[3], buf3, buflen);
+    mlk_xof_x4_squeezeblocks(buf, 1, &statex);
+    ctr[0] = mlk_rej_uniform(vec[0].coeffs, MLKEM_N, ctr[0], buf[0], buflen);
+    ctr[1] = mlk_rej_uniform(vec[1].coeffs, MLKEM_N, ctr[1], buf[1], buflen);
+    ctr[2] = mlk_rej_uniform(vec[2].coeffs, MLKEM_N, ctr[2], buf[2], buflen);
+    ctr[3] = mlk_rej_uniform(vec[3].coeffs, MLKEM_N, ctr[3], buf[3], buflen);
   }
 
   mlk_xof_x4_release(&statex);
 
   /* Specification: Partially implements
-   * [FIPS 203, Section 3.3, Destruction of intermediate values] */
-  mlk_zeroize(buf0, sizeof(buf0));
-  mlk_zeroize(buf1, sizeof(buf1));
-  mlk_zeroize(buf2, sizeof(buf2));
-  mlk_zeroize(buf3, sizeof(buf3));
+   * @[FIPS203, Section 3.3, Destruction of intermediate values] */
+  mlk_zeroize(buf, sizeof(buf));
 }
 
 MLK_INTERNAL_API
@@ -228,7 +235,7 @@ void mlk_poly_rej_uniform(mlk_poly *entry, uint8_t seed[MLKEM_SYMBYTES + 2])
   mlk_xof_release(&state);
 
   /* Specification: Partially implements
-   * [FIPS 203, Section 3.3, Destruction of intermediate values] */
+   * @[FIPS203, Section 3.3, Destruction of intermediate values] */
   mlk_zeroize(buf, sizeof(buf));
 }
 
@@ -244,7 +251,7 @@ void mlk_poly_rej_uniform(mlk_poly *entry, uint8_t seed[MLKEM_SYMBYTES + 2])
  *
  **************************************************/
 
-/* Reference: `load32_littleendian()` in the reference implementation. */
+/* Reference: `load32_littleendian()` in the reference implementation @[REF]. */
 static uint32_t mlk_load32_littleendian(const uint8_t x[4])
 {
   uint32_t r;
@@ -255,7 +262,7 @@ static uint32_t mlk_load32_littleendian(const uint8_t x[4])
   return r;
 }
 
-/* Reference: `cbd2()` in the reference implementationo. */
+/* Reference: `cbd2()` in the reference implementation @[REF]. */
 MLK_INTERNAL_API
 void mlk_poly_cbd2(mlk_poly *r, const uint8_t buf[2 * MLKEM_N / 4])
 {
@@ -282,7 +289,7 @@ void mlk_poly_cbd2(mlk_poly *r, const uint8_t buf[2 * MLKEM_N / 4])
   }
 }
 
-#if defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_ETA1 == 3
+#if defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_ETA1 == 3
 /*************************************************
  * Name:        mlk_load24_littleendian
  *
@@ -296,7 +303,7 @@ void mlk_poly_cbd2(mlk_poly *r, const uint8_t buf[2 * MLKEM_N / 4])
  *
  **************************************************/
 
-/* Reference: `load24_littleendian()` in the reference implementation. */
+/* Reference: `load24_littleendian()` in the reference implementation @[REF]. */
 static uint32_t mlk_load24_littleendian(const uint8_t x[3])
 {
   uint32_t r;
@@ -306,7 +313,7 @@ static uint32_t mlk_load24_littleendian(const uint8_t x[3])
   return r;
 }
 
-/* Reference: `cbd3()` in the reference implementationo. */
+/* Reference: `cbd3()` in the reference implementation @[REF]. */
 MLK_INTERNAL_API
 void mlk_poly_cbd3(mlk_poly *r, const uint8_t buf[3 * MLKEM_N / 4])
 {
@@ -333,14 +340,13 @@ void mlk_poly_cbd3(mlk_poly *r, const uint8_t buf[3 * MLKEM_N / 4])
     }
   }
 }
-#endif /* defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_ETA1 == \
-          3 */
+#endif /* MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_ETA1 == 3 */
 
-#else /* MLK_MULTILEVEL_BUILD_NO_SHARED */
+#else /* !MLK_CONFIG_MULTILEVEL_NO_SHARED */
 
 MLK_EMPTY_CU(sampling)
 
-#endif /* MLK_MULTILEVEL_BUILD_NO_SHARED */
+#endif /* MLK_CONFIG_MULTILEVEL_NO_SHARED */
 
 /* To facilitate single-compilation-unit (SCU) builds, undefine all macros.
  * Don't modify by hand -- this is auto-generated by scripts/autogen. */

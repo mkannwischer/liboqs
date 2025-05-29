@@ -1,20 +1,31 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
-// Implementation based on Kyber reference repository
-// https://github.com/pq-crystals/kyber/blob/main/avx2
+/* References
+ * ==========
+ *
+ * - [REF_AVX2]
+ *   CRYSTALS-Kyber optimized AVX2 implementation
+ *   Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schanck, Schwabe, Seiler, Stehlé
+ *   https://github.com/pq-crystals/kyber/tree/main/avx2
+ */
 
-// Changes:
-// - Add call to csub in reduce128_avx to produce outputs
-//   in [0,1,...,q-1] rather than [0,1,...,q], matching the
-//   semantics of mlk_poly_reduce().
+/*
+ * This file is derived from the public domain
+ * AVX2 Kyber implementation @[REF_AVX2].
+ *
+ * Changes:
+ * - Add call to csub in reduce128_avx to produce outputs
+ *   in [0,1,...,q-1] rather than [0,1,...,q], matching the
+ *   semantics of mlk_poly_reduce().
+ */
 
 #include "../../../common.h"
 
 #if defined(MLK_ARITH_BACKEND_X86_64_DEFAULT) && \
-    !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
 
 /*
  * WARNING: This file is auto-derived from the mlkem-native source file
@@ -117,5 +128,5 @@ reduce128_avx2:
         vmovdqa	%ymm9, 0xe0(%rdi)
         retq
 
-#endif /* MLK_ARITH_BACKEND_X86_64_DEFAULT &&
-         ! MLK_MULTILEVEL_BUILD_NO_SHARED */
+#endif /* MLK_ARITH_BACKEND_X86_64_DEFAULT && !MLK_CONFIG_MULTILEVEL_NO_SHARED \
+        */

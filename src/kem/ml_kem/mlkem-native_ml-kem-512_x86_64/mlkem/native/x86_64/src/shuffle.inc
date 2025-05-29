@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
+ */
+
+/*
+ * This file is derived from the public domain
+ * AVX2 Kyber implementation @[REF_AVX2].
  */
 
 .macro shuffle8 r0,r1,r2,r3

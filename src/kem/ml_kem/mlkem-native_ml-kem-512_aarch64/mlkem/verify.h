@@ -1,7 +1,32 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
+
+/* References
+ * ==========
+ *
+ * - [FIPS203]
+ *   FIPS 203 Module-Lattice-Based Key-Encapsulation Mechanism Standard
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/pubs/fips/203/final
+ *
+ * - [REF]
+ *   CRYSTALS-Kyber C reference implementation
+ *   Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schanck, Schwabe, Seiler, Stehlé
+ *   https://github.com/pq-crystals/kyber/tree/main/ref
+ *
+ * - [libmceliece]
+ *   libmceliece implementation of Classic McEliece
+ *   Bernstein, Chou
+ *   https://lib.mceliece.org/
+ *
+ * - [optblocker]
+ *   PQC forum post on opt-blockers using volatile globals
+ *   Daniel J. Bernstein
+ *   https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/hqbtIGFKIpU/m/H14H0wOlBgAJ
+ */
+
 #ifndef MLK_VERIFY_H
 #define MLK_VERIFY_H
 
@@ -23,9 +48,8 @@
    We consider two approaches to implement a value barrier:
    - An empty inline asm block which marks the target value as clobbered.
    - XOR'ing with the value of a volatile global that's set to 0;
-     for a discussion / implementation of this idea, see e.g.
-     * https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/hqbtIGFKIpU/m/H14H0wOlBgAJ
-     * https://lib.mceliece.org/libmceliece-20240513/inttypes/crypto_intN.h.html
+     see @[optblocker] for a discussion of this idea, and
+     @[libmceliece, inttypes/crypto_intN.h] for an implementation.
 
    The first approach is cheap because it only prevents the compiler
    from reasoning about the value of the variable past the barrier,
@@ -39,11 +63,12 @@
    We use the empty-ASM value barrier for GCC and clang, and fall
    back to the global volatile barrier otherwise.
 
-   The global value barrier can be forced by setting MLK_NO_ASM_VALUE_BARRIER.
+   The global value barrier can be forced by setting
+   MLK_CONFIG_NO_ASM_VALUE_BARRIER.
 
 */
 
-#if defined(MLK_HAVE_INLINE_ASM) && !defined(MLK_NO_ASM_VALUE_BARRIER)
+#if defined(MLK_HAVE_INLINE_ASM) && !defined(MLK_CONFIG_NO_ASM_VALUE_BARRIER)
 #define MLK_USE_ASM_VALUE_BARRIER
 #endif
 
@@ -129,7 +154,7 @@ __contract__(ensures(return_value == b))
  *
  **************************************************/
 
-/* Reference: Embedded in `cmov_int16()` in the reference implementation.
+/* Reference: Embedded in `cmov_int16()` in the reference implementation @[REF].
  *            - Use value barrier and shift instead of `b = -b` to
  *              convert condition into mask. */
 static MLK_INLINE uint16_t mlk_ct_cmask_nonzero_u16(uint16_t x)
@@ -150,7 +175,7 @@ __contract__(ensures(return_value == ((x == 0) ? 0 : 0xFFFF)))
  **************************************************/
 
 /* Reference: Embedded in `verify()` and `cmov()` in the
- *            reference implementation.
+ *            reference implementation @[REF].
  *            - We include a value barrier not present in the
  *              reference implementation, to prevent the compiler
  *              from realizing that this function returns a mask. */
@@ -187,7 +212,7 @@ __contract__(ensures(return_value == ((x == 0) ? 0 : 0xFF)))
  **************************************************/
 
 /* Reference: Embedded in polynomial compression function in the
- *            reference implementation.
+ *            reference implementation @[REF].
  *            - Used as part of signed->unsigned conversion for modular
  *              representatives to detect whether the input is negative.
  *              This happen in `mlk_poly_reduce()` here, and as part of
@@ -232,22 +257,22 @@ __contract__(ensures(return_value == ((x < 0) ? 0xFFFF : 0)))
  *
  * Specification:
  * - With `a = MLKEM_Q_HALF` and `b=0`, this essentially
- *   implements `Decompress_1` [FIPS 203, Eq (4.8)] in `mlk_poly_frommsg()`.
+ *   implements `Decompress_1` @[FIPS203, Eq (4.8)] in `mlk_poly_frommsg()`.
  * - With `a = x + MLKEM_Q`, `b = x`, and `cond` indicating whether `x`
  *   is negative, implements signed->unsigned conversion of modular
  *   representatives. Questions of representation are not considered
- *   in the specification [FIPS 203, Section 2.4.1, "The pseudocode is
+ *   in the specification @[FIPS203, Section 2.4.1, "The pseudocode is
  *   agnostic regarding how an integer modulo 𝑚 is represented in
  *   actual implementations"].
  *
  **************************************************/
 
 /* Reference: Embedded in polynomial compression function in the
- *            reference implementation.
+ *            reference implementation @[REF].
  *            - Used as part of signed->unsigned conversion for modular
  *              representatives. This happen in `mlk_poly_reduce()` here,
- *              and as part of polynomial compression functions in the
- *              reference implementation. See `mlk_poly_reduce()`.
+ *              and as part of polynomial compression functions in @[REF].
+ *              See `mlk_poly_reduce()`.
  *            - Barrier to reduce the risk of compiler-introduced branches.
  *            For `a = MLKEM_Q_HALF` and `b=0`, also embedded in
  *            `poly_frommsg()` from the reference implementation, which uses
@@ -278,7 +303,7 @@ __contract__(ensures(return_value == (cond ? a : b)))
  *
  **************************************************/
 
-/* Reference: Embedded into `cmov()` in the reference implementation.
+/* Reference: Embedded into `cmov()` in the reference implementation @[REF].
  *            - Use value barrier to get mask from condition value. */
 static MLK_INLINE uint8_t mlk_ct_sel_uint8(uint8_t a, uint8_t b, uint8_t cond)
 __contract__(ensures(return_value == (cond ? a : b)))
@@ -299,11 +324,11 @@ __contract__(ensures(return_value == (cond ? a : b)))
  *
  * Specification:
  * - Used to securely compute conditional move in
- *   [FIPS 203, Algorithm 18 (ML-KEM.Decaps_Internal, L9-11]
+ *   @[FIPS203, Algorithm 18 (ML-KEM.Decaps_Internal, L9-11]
  *
  **************************************************/
 
-/* Reference: `cmov()` in the reference implementation
+/* Reference: `cmov()` in the reference implementation @[REF]
  *            - We return `uint8_t`, not `int`.
  *            - We use an additional XOR-accumulator in the comparison loop
  *              which prevents early abort if the OR-accumulator is 0xFF.
@@ -356,11 +381,11 @@ __contract__(
  *
  * Specification:
  * - Used to securely compute conditional move in
- *   [FIPS 203, Algorithm 18 (ML-KEM.Decaps_Internal, L9-11]
+ *   @[FIPS203, Algorithm 18 (ML-KEM.Decaps_Internal, L9-11]
  *
  **************************************************/
 
-/* Reference: `cmov()` in the reference implementation.
+/* Reference: `cmov()` in the reference implementation @[REF].
  *            - We move if condition value is `0`, not `1`.
  *            - We use `mlk_ct_sel_uint8` for constant-time selection. */
 static MLK_INLINE void mlk_ct_cmov_zero(uint8_t *r, const uint8_t *x,
@@ -387,31 +412,24 @@ __contract__(
  *              size_t len:       Amount of bytes to be zeroed
  *
  * Specification: Used to implement
- * [FIPS 203, Section 3.3, Destruction of intermediate values]
+ * @[FIPS203, Section 3.3, Destruction of intermediate values]
  *
  **************************************************/
 
-/* Reference: Not present in the reference implementation. */
-static MLK_INLINE void mlk_zeroize(void *r, size_t len)
-__contract__(
-  requires(memory_no_alias(r, len))
-  assigns(memory_slice(r, len))
-);
-
-#if defined(MLK_USE_ZEROIZE_NATIVE)
-static MLK_INLINE void mlk_zeroize(void *ptr, size_t len)
-{
-  mlk_zeroize_native(ptr, len);
-}
-#elif defined(MLK_SYS_WINDOWS)
+/* Reference: Not present in the reference implementation @[REF]. */
+#if !defined(MLK_CONFIG_CUSTOM_ZEROIZE)
+#if defined(MLK_SYS_WINDOWS)
 #include <windows.h>
 static MLK_INLINE void mlk_zeroize(void *ptr, size_t len)
-{
-  SecureZeroMemory(ptr, len);
-}
+__contract__(
+  requires(memory_no_alias(ptr, len))
+  assigns(memory_slice(ptr, len))) { SecureZeroMemory(ptr, len); }
 #elif defined(MLK_HAVE_INLINE_ASM)
 #include <string.h>
 static MLK_INLINE void mlk_zeroize(void *ptr, size_t len)
+__contract__(
+  requires(memory_no_alias(ptr, len))
+  assigns(memory_slice(ptr, len)))
 {
   memset(ptr, 0, len);
   /* This follows OpenSSL and seems sufficient to prevent the compiler
@@ -421,8 +439,9 @@ static MLK_INLINE void mlk_zeroize(void *ptr, size_t len)
    * that would be preferred. */
   __asm__ __volatile__("" : : "r"(ptr) : "memory");
 }
-#else
-#error No plausibly-secure implementation of mlk_zeroize available. Please provide your own using MLK_USE_ZEROIZE_NATIVE.
-#endif
+#else /* !MLK_SYS_WINDOWS && MLK_HAVE_INLINE_ASM */
+#error No plausibly-secure implementation of mlk_zeroize available. Please provide your own using MLK_CONFIG_CUSTOM_ZEROIZE.
+#endif /* !MLK_SYS_WINDOWS && !MLK_HAVE_INLINE_ASM */
+#endif /* !MLK_CONFIG_CUSTOM_ZEROIZE */
 
-#endif /* MLK_VERIFY_H */
+#endif /* !MLK_VERIFY_H */

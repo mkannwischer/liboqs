@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 #ifndef MLK_DEBUG_H
 #define MLK_DEBUG_H
@@ -59,7 +59,7 @@ void mlk_debug_check_bounds(const char *file, int line, const int16_t *ptr,
  * value_ub: Exclusive upper value bound */
 #define mlk_assert_bound(ptr, len, value_lb, value_ub)                      \
   mlk_debug_check_bounds(__FILE__, __LINE__, (const int16_t *)(ptr), (len), \
-                         (value_lb)-1, (value_ub))
+                         (value_lb) - 1, (value_ub))
 
 /* Check absolute bounds in array of int16_t's
  * ptr: Base of array, expression of type int16_t*
@@ -99,7 +99,7 @@ void mlk_debug_check_bounds(const char *file, int line, const int16_t *ptr,
                  array_abs_bound(&((int16_t(*)[(N)])(ptr))[kN][0], 0, (N), \
                                  (value_abs_bd))))
 
-#else /* MLKEM_DEBUG */
+#else /* !MLKEM_DEBUG && CBMC */
 
 #define mlk_assert(val) \
   do                    \
@@ -125,5 +125,5 @@ void mlk_debug_check_bounds(const char *file, int line, const int16_t *ptr,
   } while (0)
 
 
-#endif /* MLKEM_DEBUG */
-#endif /* MLK_DEBUG_H */
+#endif /* !MLKEM_DEBUG && !CBMC */
+#endif /* !MLK_DEBUG_H */

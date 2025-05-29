@@ -1,9 +1,26 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 #ifndef MLK_SYS_H
 #define MLK_SYS_H
+
+#if !defined(MLK_CONFIG_NO_ASM) && (defined(__GNUC__) || defined(__clang__))
+#define MLK_HAVE_INLINE_ASM
+#endif
+
+/* Try to find endianness, if not forced through CFLAGS already */
+#if !defined(MLK_SYS_LITTLE_ENDIAN) && !defined(MLK_SYS_BIG_ENDIAN)
+#if defined(__BYTE_ORDER__)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define MLK_SYS_LITTLE_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define MLK_SYS_BIG_ENDIAN
+#else
+#error "__BYTE_ORDER__ defined, but don't recognize value."
+#endif
+#endif /* __BYTE_ORDER__ */
+#endif /* !MLK_SYS_LITTLE_ENDIAN && !MLK_SYS_BIG_ENDIAN */
 
 /* Check if we're running on an AArch64 little endian system. _M_ARM64 is set by
  * MSVC. */
@@ -23,43 +40,45 @@
 #endif
 #endif /* __x86_64__ */
 
-#if defined(_WIN32)
-#define MLK_SYS_WINDOWS
-#endif /* _WIN32 */
-
-#if !defined(MLK_NO_ASM) && (defined(__GNUC__) || defined(__clang__))
-#define MLK_HAVE_INLINE_ASM
+#if defined(MLK_SYS_LITTLE_ENDIAN) && defined(__powerpc64__)
+#define MLK_SYS_PPC64LE
 #endif
 
-/* Try to find endianness, if not forced through CFLAGS already */
-#if !defined(MLK_SYS_LITTLE_ENDIAN) && !defined(MLK_SYS_BIG_ENDIAN)
-#if defined(__BYTE_ORDER__)
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define MLK_SYS_LITTLE_ENDIAN
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define MLK_SYS_BIG_ENDIAN
-#else /* __BYTE_ORDER__ */
-#error "__BYTE_ORDER__ defined, but don't recognize value."
-#endif /* __BYTE_ORDER__ */
-#endif /* !defined(__BYTE_ORDER__) */
-#endif /* defined(MLK_SYS_LITTLE_ENDIAN) || defined(MLK_SYS_BIG_ENDIAN) */
+#if defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
+#define MLK_SYS_RISCV64
+#endif
 
-/* If MLK_FORCE_AARCH64 is set, assert that we're indeed on an AArch64 system.
- */
+#if defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 32
+#define MLK_SYS_RISCV32
+#endif
+
+#if defined(_WIN32)
+#define MLK_SYS_WINDOWS
+#endif
+
 #if defined(MLK_FORCE_AARCH64) && !defined(MLK_SYS_AARCH64)
 #error "MLK_FORCE_AARCH64 is set, but we don't seem to be on an AArch64 system."
 #endif
 
-/* If MLK_FORCE_AARCH64_EB is set, assert that we're indeed on a big endian
- * AArch64 system. */
 #if defined(MLK_FORCE_AARCH64_EB) && !defined(MLK_SYS_AARCH64_EB)
 #error \
     "MLK_FORCE_AARCH64_EB is set, but we don't seem to be on an AArch64 system."
 #endif
 
-/* If MLK_FORCE_X86_64 is set, assert that we're indeed on an X86_64 system. */
 #if defined(MLK_FORCE_X86_64) && !defined(MLK_SYS_X86_64)
 #error "MLK_FORCE_X86_64 is set, but we don't seem to be on an X86_64 system."
+#endif
+
+#if defined(MLK_FORCE_PPC64LE) && !defined(MLK_SYS_PPC64LE)
+#error "MLK_FORCE_PPC64LE is set, but we don't seem to be on a PPC64LE system."
+#endif
+
+#if defined(MLK_FORCE_RISCV64) && !defined(MLK_SYS_RISCV64)
+#error "MLK_FORCE_RISCV64 is set, but we don't seem to be on a RISCV64 system."
+#endif
+
+#if defined(MLK_FORCE_RISCV32) && !defined(MLK_SYS_RISCV32)
+#error "MLK_FORCE_RISCV32 is set, but we don't seem to be on a RISCV32 system."
 #endif
 
 /*
@@ -86,11 +105,11 @@
 #define MLK_ALWAYS_INLINE MLK_INLINE
 #endif
 
-#else
+#else /* !inline */
 #define MLK_INLINE inline
 #define MLK_ALWAYS_INLINE MLK_INLINE __attribute__((always_inline))
-#endif
-#endif
+#endif /* inline */
+#endif /* !MLK_INLINE */
 
 /*
  * C90 does not have the restrict compiler directive yet.
@@ -103,12 +122,14 @@
 #define MLK_RESTRICT
 #endif
 
-#else
+#else /* !restrict */
 
 #define MLK_RESTRICT restrict
-#endif
+#endif /* restrict */
 
 #define MLK_DEFAULT_ALIGN 32
+#define MLK_ALIGN_UP(N) \
+  ((((N) + (MLK_DEFAULT_ALIGN - 1)) / MLK_DEFAULT_ALIGN) * MLK_DEFAULT_ALIGN)
 #if defined(__GNUC__)
 #define MLK_ALIGN __attribute__((aligned(MLK_DEFAULT_ALIGN)))
 #elif defined(_MSC_VER)
@@ -141,15 +162,15 @@
 #else
 #define MLK_CET_ENDBR
 #endif
-#endif
+#endif /* MLK_SYS_X86_64 */
 
-#if defined(MLK_CT_TESTING_ENABLED) && !defined(__ASSEMBLER__)
+#if defined(MLK_CONFIG_CT_TESTING_ENABLED) && !defined(__ASSEMBLER__)
 #include <valgrind/memcheck.h>
 #define MLK_CT_TESTING_SECRET(ptr, len) \
   VALGRIND_MAKE_MEM_UNDEFINED((ptr), (len))
 #define MLK_CT_TESTING_DECLASSIFY(ptr, len) \
   VALGRIND_MAKE_MEM_DEFINED((ptr), (len))
-#else
+#else /* MLK_CONFIG_CT_TESTING_ENABLED && !__ASSEMBLER__ */
 #define MLK_CT_TESTING_SECRET(ptr, len) \
   do                                    \
   {                                     \
@@ -158,7 +179,7 @@
   do                                        \
   {                                         \
   } while (0)
-#endif /* MLK_CT_TESTING_ENABLED */
+#endif /* !(MLK_CONFIG_CT_TESTING_ENABLED && !__ASSEMBLER__) */
 
 #if defined(__GNUC__) || defined(clang)
 #define MLK_MUST_CHECK_RETURN_VALUE __attribute__((warn_unused_result))
@@ -166,4 +187,4 @@
 #define MLK_MUST_CHECK_RETURN_VALUE
 #endif
 
-#endif /* MLK_SYS_H */
+#endif /* !MLK_SYS_H */

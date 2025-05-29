@@ -1,18 +1,23 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
-// AArch64 re-implementation of the asymmetric base multiplication from:
+/* References
+ * ==========
+ *
+ * - [NeonNTT]
+ *   Neon NTT: Faster Dilithium, Kyber, and Saber on Cortex-A72 and Apple M1
+ *   Becker, Hwang, Kannwischer, Yang, Yang
+ *   https://eprint.iacr.org/2021/986
+ */
 
-// Neon NTT: Faster Dilithium, Kyber, and Saber on Cortex-A72 and Apple M1
-// https://eprint.iacr.org/2021/986
-// https://github.com/neon-ntt/neon-ntt
+/* Re-implementation of asymmetric base multiplication following @[NeonNTT] */
 
 #include "../../../common.h"
-#if defined(MLK_ARITH_BACKEND_AARCH64_OPT) && \
-    !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) && \
-    (defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 2)
+#if defined(MLK_ARITH_BACKEND_AARCH64) && \
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED) && \
+    (defined(MLK_CONFIG_MULTILEVEL_WITH_SHARED) || MLKEM_K == 2)
 
 /*
  * WARNING: This file is auto-derived from the mlkem-native source file
@@ -194,6 +199,5 @@ polyvec_basemul_acc_montgomery_cached_asm_k2_loop:
         add	sp, sp, #0x40
         ret
 
-#endif /* defined(MLK_ARITH_BACKEND_AARCH64_OPT) && \
-          !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) && \
-          (defined(MLK_MULTILEVEL_BUILD_WITH_SHARED) || MLKEM_K == 2) */
+#endif /* MLK_ARITH_BACKEND_AARCH64 && !MLK_CONFIG_MULTILEVEL_NO_SHARED && \
+          (MLK_CONFIG_MULTILEVEL_WITH_SHARED || MLKEM_K == 2) */

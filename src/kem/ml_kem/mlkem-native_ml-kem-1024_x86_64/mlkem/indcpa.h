@@ -1,7 +1,17 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
+
+/* References
+ * ==========
+ *
+ * - [FIPS203]
+ *   FIPS 203 Module-Lattice-Based Key-Encapsulation Mechanism Standard
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/pubs/fips/203/final
+ */
+
 #ifndef MLK_INDCPA_H
 #define MLK_INDCPA_H
 
@@ -19,25 +29,25 @@
  *              uniformly random. Performs rejection sampling on output of
  *              a XOF
  *
- * Arguments:   - mlk_polyvec *a: pointer to output matrix A
+ * Arguments:   - mlk_polymat a: pointer to output matrix A
  *              - const uint8_t *seed: pointer to input seed
  *              - int transposed: boolean deciding whether A or A^T is generated
  *
- * Specification: Implements [FIPS 203, Algorithm 13 (K-PKE.KeyGen), L3-7]
- *                and [FIPS 203, Algorithm 14 (K-PKE.Encrypt), L4-8].
+ * Specification: Implements @[FIPS203, Algorithm 13 (K-PKE.KeyGen), L3-7]
+ *                and @[FIPS203, Algorithm 14 (K-PKE.Encrypt), L4-8].
  *                The `transposed` parameter only affects internal presentation.
  *
  **************************************************/
 MLK_INTERNAL_API
-void mlk_gen_matrix(mlk_polyvec *a, const uint8_t seed[MLKEM_SYMBYTES],
+void mlk_gen_matrix(mlk_polymat a, const uint8_t seed[MLKEM_SYMBYTES],
                     int transposed)
 __contract__(
-  requires(memory_no_alias(a, sizeof(mlk_polyvec) * MLKEM_K))
+  requires(memory_no_alias(a, sizeof(mlk_polymat)))
   requires(memory_no_alias(seed, MLKEM_SYMBYTES))
   requires(transposed == 0 || transposed == 1)
   assigns(object_whole(a))
-  ensures(forall(x, 0, MLKEM_K, forall(y, 0, MLKEM_K,
-  array_bound(a[x].vec[y].coeffs, 0, MLKEM_N, 0, MLKEM_Q))));
+  ensures(forall(x, 0, MLKEM_K * MLKEM_K,
+    array_bound(a[x].coeffs, 0, MLKEM_N, 0, MLKEM_Q)))
 );
 
 #define mlk_indcpa_keypair_derand MLK_NAMESPACE_K(indcpa_keypair_derand)
@@ -54,7 +64,7 @@ __contract__(
  *              - const uint8_t *coins: pointer to input randomness
  *                             (of length MLKEM_SYMBYTES bytes)
  *
- * Specification: Implements [FIPS 203, Algorithm 13 (K-PKE.KeyGen)].
+ * Specification: Implements @[FIPS203, Algorithm 13 (K-PKE.KeyGen)].
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -86,7 +96,7 @@ __contract__(
  *                 seed (of length MLKEM_SYMBYTES) to deterministically generate
  *                 all randomness
  *
- * Specification: Implements [FIPS 203, Algorithm 14 (K-PKE.Encrypt)].
+ * Specification: Implements @[FIPS203, Algorithm 14 (K-PKE.Encrypt)].
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -116,7 +126,7 @@ __contract__(
  *              - const uint8_t *sk: pointer to input secret key
  *                                   (of length MLKEM_INDCPA_SECRETKEYBYTES)
  *
- * Specification: Implements [FIPS 203, Algorithm 15 (K-PKE.Decrypt)].
+ * Specification: Implements @[FIPS203, Algorithm 15 (K-PKE.Decrypt)].
  *
  **************************************************/
 MLK_INTERNAL_API
@@ -130,4 +140,4 @@ __contract__(
   assigns(object_whole(m))
 );
 
-#endif /* MLK_INDCPA_H */
+#endif /* !MLK_INDCPA_H */

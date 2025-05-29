@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
 /*************************************************
@@ -19,9 +19,8 @@
  * Returns number of sampled 16-bit integers (at most MLKEM_N).
  **************************************************/
 #include "../../../common.h"
-#if (defined(MLK_ARITH_BACKEND_AARCH64_CLEAN) || \
-        defined(MLK_ARITH_BACKEND_AARCH64_OPT))  \
-    && !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
+#if defined(MLK_ARITH_BACKEND_AARCH64) && \
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
 
 /*
  * WARNING: This file is auto-derived from the mlkem-native source file
@@ -49,15 +48,27 @@ MLK_ASM_FN_SYMBOL(rej_uniform_asm)
         dup	v30.8h, w11
         mov	x8, sp
         mov	x7, x8
-        mov	w9, #0x0                // =0
-        mov	w4, #0x100              // =256
-        cmp	w2, #0x30
+        mov	x11, #0x0               // =0
+        eor	v16.16b, v16.16b, v16.16b
+
+initial_zero:
+        str	q16, [x7], #0x40
+        stur	q16, [x7, #-0x30]
+        stur	q16, [x7, #-0x20]
+        stur	q16, [x7, #-0x10]
+        add	x11, x11, #0x20
+        cmp	x11, #0x100
+        b.lt	initial_zero
+        mov	x7, x8
+        mov	x9, #0x0                // =0
+        mov	x4, #0x100              // =256
+        cmp	x2, #0x30
         b.lo	loop48_end
 
 loop48:
-        cmp	w9, w4
+        cmp	x9, x4
         b.hs	memory_copy
-        sub	w2, w2, #0x30
+        sub	x2, x2, #0x30
         ld3	{ v0.16b, v1.16b, v2.16b }, [x1], #48
         zip1	v4.16b, v0.16b, v1.16b
         zip2	v5.16b, v0.16b, v1.16b
@@ -87,10 +98,10 @@ loop48:
         fmov	w13, s21
         fmov	w14, s22
         fmov	w15, s23
-        ldr	q24, [x3, w12, uxtw #4]
-        ldr	q25, [x3, w13, uxtw #4]
-        ldr	q26, [x3, w14, uxtw #4]
-        ldr	q27, [x3, w15, uxtw #4]
+        ldr	q24, [x3, x12, lsl #4]
+        ldr	q25, [x3, x13, lsl #4]
+        ldr	q26, [x3, x14, lsl #4]
+        ldr	q27, [x3, x15, lsl #4]
         cnt	v4.16b, v4.16b
         cnt	v5.16b, v5.16b
         cnt	v6.16b, v6.16b
@@ -108,26 +119,26 @@ loop48:
         tbl	v18.16b, { v18.16b }, v26.16b
         tbl	v19.16b, { v19.16b }, v27.16b
         str	q16, [x7]
-        add	x7, x7, w12, uxtw #1
+        add	x7, x7, x12, lsl #1
         str	q17, [x7]
-        add	x7, x7, w13, uxtw #1
+        add	x7, x7, x13, lsl #1
         str	q18, [x7]
-        add	x7, x7, w14, uxtw #1
+        add	x7, x7, x14, lsl #1
         str	q19, [x7]
-        add	x7, x7, w15, uxtw #1
-        add	w12, w12, w13
-        add	w14, w14, w15
-        add	w9, w9, w12
-        add	w9, w9, w14
-        cmp	w2, #0x30
+        add	x7, x7, x15, lsl #1
+        add	x12, x12, x13
+        add	x14, x14, x15
+        add	x9, x9, x12
+        add	x9, x9, x14
+        cmp	x2, #0x30
         b.hs	loop48
 
 loop48_end:
-        cmp	w9, w4
+        cmp	x9, x4
         b.hs	memory_copy
-        cmp	w2, #0x18
+        cmp	x2, #0x18
         b.lo	memory_copy
-        sub	w2, w2, #0x18
+        sub	x2, x2, #0x18
         ld3	{ v0.8b, v1.8b, v2.8b }, [x1], #24
         zip1	v4.16b, v0.16b, v1.16b
         zip1	v5.16b, v1.16b, v2.16b
@@ -143,8 +154,8 @@ loop48_end:
         uaddlv	s21, v5.8h
         fmov	w12, s20
         fmov	w13, s21
-        ldr	q24, [x3, w12, uxtw #4]
-        ldr	q25, [x3, w13, uxtw #4]
+        ldr	q24, [x3, x12, lsl #4]
+        ldr	q25, [x3, x13, lsl #4]
         cnt	v4.16b, v4.16b
         cnt	v5.16b, v5.16b
         uaddlv	s20, v4.8h
@@ -154,16 +165,16 @@ loop48_end:
         tbl	v16.16b, { v16.16b }, v24.16b
         tbl	v17.16b, { v17.16b }, v25.16b
         str	q16, [x7]
-        add	x7, x7, w12, uxtw #1
+        add	x7, x7, x12, lsl #1
         str	q17, [x7]
-        add	x7, x7, w13, uxtw #1
-        add	w9, w9, w12
-        add	w9, w9, w13
+        add	x7, x7, x13, lsl #1
+        add	x9, x9, x12
+        add	x9, x9, x13
 
 memory_copy:
-        cmp	w9, w4
-        csel	w9, w9, w4, lo
-        mov	w11, #0x0               // =0
+        cmp	x9, x4
+        csel	x9, x9, x4, lo
+        mov	x11, #0x0               // =0
         mov	x7, x8
 
 final_copy:
@@ -175,16 +186,14 @@ final_copy:
         stur	q17, [x0, #-0x30]
         stur	q18, [x0, #-0x20]
         stur	q19, [x0, #-0x10]
-        add	w11, w11, #0x20
-        cmp	w11, #0x100
+        add	x11, x11, #0x20
+        cmp	x11, #0x100
         b.lt	final_copy
-        mov	w0, w9
+        mov	x0, x9
         b	return
 
 return:
         add	sp, sp, #0x240
         ret
 
-#endif /* (defined(MLK_ARITH_BACKEND_AARCH64_CLEAN) ||
-           defined(MLK_ARITH_BACKEND_AARCH64_OPT))
-          && !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) */
+#endif /* MLK_ARITH_BACKEND_AARCH64 && !MLK_CONFIG_MULTILEVEL_NO_SHARED */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 #ifndef MLK_PARAMS_H
 #define MLK_PARAMS_H
@@ -9,10 +9,20 @@
 #include MLK_CONFIG_FILE
 #else
 #include "config.h"
-#endif /* MLK_CONFIG_FILE */
+#endif
 
-#if !defined(MLKEM_K)
-#error MLKEM_K is not defined
+#if !defined(MLK_CONFIG_PARAMETER_SET)
+#error MLK_CONFIG_PARAMETER_SET is not defined
+#endif
+
+#if MLK_CONFIG_PARAMETER_SET == 512
+#define MLKEM_K 2
+#elif MLK_CONFIG_PARAMETER_SET == 768
+#define MLKEM_K 3
+#elif MLK_CONFIG_PARAMETER_SET == 1024
+#define MLKEM_K 4
+#else
+#error Invalid value for MLK_CONFIG_PARAMETER_SET. Must be 512, 768, or 1024.
 #endif
 
 #define MLKEM_N 256
@@ -32,7 +42,6 @@
 #define MLKEM_POLYCOMPRESSEDBYTES_D11 352
 
 #if MLKEM_K == 2
-#define MLKEM_LVL 512
 #define MLKEM_ETA1 3
 #define MLKEM_DU 10
 #define MLKEM_DV 4
@@ -40,7 +49,6 @@
 #define MLKEM_POLYCOMPRESSEDBYTES_DU MLKEM_POLYCOMPRESSEDBYTES_D10
 #define MLKEM_POLYVECCOMPRESSEDBYTES_DU (MLKEM_K * MLKEM_POLYCOMPRESSEDBYTES_DU)
 #elif MLKEM_K == 3
-#define MLKEM_LVL 768
 #define MLKEM_ETA1 2
 #define MLKEM_DU 10
 #define MLKEM_DV 4
@@ -48,14 +56,13 @@
 #define MLKEM_POLYCOMPRESSEDBYTES_DU MLKEM_POLYCOMPRESSEDBYTES_D10
 #define MLKEM_POLYVECCOMPRESSEDBYTES_DU (MLKEM_K * MLKEM_POLYCOMPRESSEDBYTES_DU)
 #elif MLKEM_K == 4
-#define MLKEM_LVL 1024
 #define MLKEM_ETA1 2
 #define MLKEM_DU 11
 #define MLKEM_DV 5
 #define MLKEM_POLYCOMPRESSEDBYTES_DV MLKEM_POLYCOMPRESSEDBYTES_D5
 #define MLKEM_POLYCOMPRESSEDBYTES_DU MLKEM_POLYCOMPRESSEDBYTES_D11
 #define MLKEM_POLYVECCOMPRESSEDBYTES_DU (MLKEM_K * MLKEM_POLYCOMPRESSEDBYTES_DU)
-#endif
+#endif /* MLKEM_K == 4 */
 
 #define MLKEM_ETA2 2
 
@@ -72,4 +79,4 @@
    2 * MLKEM_SYMBYTES)
 #define MLKEM_INDCCA_CIPHERTEXTBYTES (MLKEM_INDCPA_BYTES)
 
-#endif /* MLK_PARAMS_H */
+#endif /* !MLK_PARAMS_H */

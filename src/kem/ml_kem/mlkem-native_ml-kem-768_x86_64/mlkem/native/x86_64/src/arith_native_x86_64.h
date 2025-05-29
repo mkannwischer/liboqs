@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 #ifndef MLK_NATIVE_X86_64_SRC_ARITH_NATIVE_X86_64_H
 #define MLK_NATIVE_X86_64_SRC_ARITH_NATIVE_X86_64_H
@@ -26,18 +26,19 @@ void mlk_ntt_avx2(__m256i *r, const __m256i *mlk_qdata);
 #define mlk_invntt_avx2 MLK_NAMESPACE(invntt_avx2)
 void mlk_invntt_avx2(__m256i *r, const __m256i *mlk_qdata);
 
-#define mlk_nttpack_avx2 MLK_NAMESPACE(nttpack_avx2)
-void mlk_nttpack_avx2(__m256i *r, const __m256i *mlk_qdata);
-
 #define mlk_nttunpack_avx2 MLK_NAMESPACE(nttunpack_avx2)
-void mlk_nttunpack_avx2(__m256i *r, const __m256i *mlk_qdata);
+void mlk_nttunpack_avx2(__m256i *r);
 
 #define mlk_reduce_avx2 MLK_NAMESPACE(reduce_avx2)
 void mlk_reduce_avx2(__m256i *r, const __m256i *mlk_qdata);
 
 #define mlk_basemul_avx2 MLK_NAMESPACE(basemul_avx2)
 void mlk_basemul_avx2(__m256i *r, const __m256i *a, const __m256i *b,
-                      const __m256i *mlk_qdata);
+                      const __m256i *b_cache, const __m256i *mlk_qdata);
+
+#define mlk_poly_mulcache_compute_avx2 MLK_NAMESPACE(poly_mulcache_compute_avx2)
+void mlk_poly_mulcache_compute_avx2(__m256i *out, const __m256i *in,
+                                    const __m256i *mlk_qdata);
 
 #define mlk_polyvec_basemul_acc_montgomery_cached_avx2 \
   MLK_NAMESPACE(polyvec_basemul_acc_montgomery_cached_avx2)
@@ -83,4 +84,4 @@ void mlk_poly_compress_d11_avx2(uint8_t r[MLKEM_POLYCOMPRESSEDBYTES_D11],
 void mlk_poly_decompress_d11_avx2(
     __m256i *MLK_RESTRICT r, const uint8_t a[MLKEM_POLYCOMPRESSEDBYTES_D11]);
 
-#endif /* MLK_NATIVE_X86_64_SRC_ARITH_NATIVE_X86_64_H */
+#endif /* !MLK_NATIVE_X86_64_SRC_ARITH_NATIVE_X86_64_H */

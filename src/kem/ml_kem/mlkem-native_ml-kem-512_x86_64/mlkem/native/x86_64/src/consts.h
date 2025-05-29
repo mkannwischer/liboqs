@@ -1,14 +1,24 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
+ */
+
+/* References
+ * ==========
+ *
+ * - [REF_AVX2]
+ *   CRYSTALS-Kyber optimized AVX2 implementation
+ *   Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schanck, Schwabe, Seiler, Stehlé
+ *   https://github.com/pq-crystals/kyber/tree/main/avx2
+ */
+
+/*
+ * This file is derived from the public domain
+ * AVX2 Kyber implementation @[REF_AVX2].
  */
 
 #ifndef MLK_NATIVE_X86_64_SRC_CONSTS_H
 #define MLK_NATIVE_X86_64_SRC_CONSTS_H
-/*
- * Implementation from Kyber reference repository
- * https://github.com/pq-crystals/kyber/blob/main/avx2/consts.h
- */
 #include "../../../common.h"
 
 #define MLK_AVX2_BACKEND_DATA_OFFSET_16XQ 0
@@ -23,20 +33,13 @@
 #define MLK_AVX2_BACKEND_DATA_OFFSET_REVIDXD 144
 #define MLK_AVX2_BACKEND_DATA_OFFSET_ZETAS_EXP 160
 #define MLK_AVX2_BACKEND_DATA_OFFSET_16XSHIFT 624
-
-/* The C ABI on MacOS exports all symbols with a leading
- * underscore. This means that any symbols we refer to from
- * C files (functions) can't be found, and all symbols we
- * refer to from ASM also can't be found.
- *
- * This define helps us get around this
- */
+#define MLK_AVX2_BACKEND_DATA_OFFSET_MULCACHE_TWIDDLES 640
 
 #ifndef __ASSEMBLER__
 #include "align.h"
-typedef MLK_ALIGNED_INT16(640) qdata_t;
+typedef MLK_ALIGNED_INT16(768) qdata_t;
 #define mlk_qdata MLK_NAMESPACE(qdata)
 extern const qdata_t mlk_qdata;
-#endif
+#endif /* !__ASSEMBLER__ */
 
-#endif /* MLK_NATIVE_X86_64_SRC_CONSTS_H */
+#endif /* !MLK_NATIVE_X86_64_SRC_CONSTS_H */

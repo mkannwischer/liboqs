@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
 #include "../../../common.h"
-#if defined(MLK_ARITH_BACKEND_AARCH64_OPT) && \
-    !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
+#if defined(MLK_ARITH_BACKEND_AARCH64) && \
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
 
 /*
  * WARNING: This file is auto-derived from the mlkem-native source file
@@ -48,5 +48,4 @@ poly_mulcache_compute_asm_loop:
         str	q2, [x0], #0x10
         ret
 
-#endif /* MLK_ARITH_BACKEND_AARCH64_OPT &&
-          !MLK_MULTILEVEL_BUILD_NO_SHARED */
+#endif /* MLK_ARITH_BACKEND_AARCH64 && !MLK_CONFIG_MULTILEVEL_NO_SHARED */

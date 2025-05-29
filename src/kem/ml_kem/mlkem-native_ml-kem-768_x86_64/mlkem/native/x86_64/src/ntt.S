@@ -1,14 +1,32 @@
 /*
- * Copyright (c) 2024-2025 The mlkem-native project authors
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) The mlkem-native project authors
+ * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
 
-// Implementation from Kyber reference repository
-// https://github.com/pq-crystals/kyber/blob/main/avx2
+/* References
+ * ==========
+ *
+ * - [AVX2_NTT]
+ *   Faster AVX2 optimized NTT multiplication for Ring-LWE lattice cryptography.
+ *   Gregor Seiler
+ *   https://eprint.iacr.org/2018/039
+ *
+ * - [REF_AVX2]
+ *   CRYSTALS-Kyber optimized AVX2 implementation
+ *   Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schanck, Schwabe, Seiler, Stehlé
+ *   https://github.com/pq-crystals/kyber/tree/main/avx2
+ */
+
+/*
+ * This file is derived from the public domain
+ * AVX2 Kyber implementation @[REF_AVX2].
+ *
+ * The core ideas behind the implementation are described in @[AVX2_NTT].
+ */
 
 #include "../../../common.h"
 #if defined(MLK_ARITH_BACKEND_X86_64_DEFAULT) && \
-    !defined(MLK_MULTILEVEL_BUILD_NO_SHARED)
+    !defined(MLK_CONFIG_MULTILEVEL_NO_SHARED)
 
 /*
  * WARNING: This file is auto-derived from the mlkem-native source file
@@ -608,5 +626,5 @@ MLK_ASM_FN_SYMBOL(ntt_avx2)
         vmovdqa	%ymm11, 0x1e0(%rdi)
         retq
 
-#endif /* defined(MLK_ARITH_BACKEND_X86_64_DEFAULT) && \
-          !defined(MLK_MULTILEVEL_BUILD_NO_SHARED) */
+#endif /* MLK_ARITH_BACKEND_X86_64_DEFAULT && !MLK_CONFIG_MULTILEVEL_NO_SHARED \
+        */
