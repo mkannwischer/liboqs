@@ -2,6 +2,17 @@
  * Copyright (c) The mldsa-native project authors
  * SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT
  */
+
+/* References
+ * ==========
+ *
+ * - [FIPS140_3_IG]
+ *   Implementation Guidance for FIPS 140-3 and the Cryptographic Module
+ *   Validation Program
+ *   National Institute of Standards and Technology
+ *   https://csrc.nist.gov/projects/cryptographic-module-validation-program/fips-140-3-ig-announcements
+ */
+
 #ifndef MLD_INTEGRATION_LIBOQS_CONFIG_AARCH64_H
 #define MLD_INTEGRATION_LIBOQS_CONFIG_AARCH64_H
 
@@ -14,27 +25,40 @@
 #endif
 #endif /* !__ASSEMBLER__ */
 
-
-#define MLD_RANDOMIZED_SIGNING
-
 /* Use OQS's FIPS202 via glue headers */
-#define MLD_CONFIG_FIPS202_CUSTOM_HEADER "../integration/liboqs/fips202_glue.h"
+#define MLD_CONFIG_FIPS202_CUSTOM_HEADER \
+  "../../integration/liboqs/fips202_glue.h"
 #define MLD_CONFIG_FIPS202X4_CUSTOM_HEADER \
-  "../integration/liboqs/fips202x4_glue.h"
+  "../../integration/liboqs/fips202x4_glue.h"
 
-#ifndef MLDSA_MODE
-#define MLDSA_MODE 2
+/******************************************************************************
+ * Name:        MLD_CONFIG_PARAMETER_SET
+ *
+ * Description: Specifies the parameter set for ML-DSA
+ *              - MLD_CONFIG_PARAMETER_SET=44 corresponds to ML-DSA-44
+ *              - MLD_CONFIG_PARAMETER_SET=65 corresponds to ML-DSA-65
+ *              - MLD_CONFIG_PARAMETER_SET=87 corresponds to ML-DSA-87
+ *
+ *              This can also be set using CFLAGS.
+ *
+ *****************************************************************************/
+#ifndef MLD_CONFIG_PARAMETER_SET
+#define MLD_CONFIG_PARAMETER_SET \
+  44 /* Change this for different security strengths */
 #endif
 
-#if MLDSA_MODE == 2
-#define MLD_NAMESPACETOP PQCP_MLDSA_NATIVE_MLDSA44_AARCH64_
-#define MLD_NAMESPACE(s) PQCP_MLDSA_NATIVE_MLDSA44_AARCH64_##s
-#elif MLDSA_MODE == 3
-#define MLD_NAMESPACETOP PQCP_MLDSA_NATIVE_MLDSA65_AARCH64_
-#define MLD_NAMESPACE(s) PQCP_MLDSA_NATIVE_MLDSA65_AARCH64_##s
-#elif MLDSA_MODE == 5
-#define MLD_NAMESPACETOP PQCP_MLDSA_NATIVE_MLDSA87_AARCH64_
-#define MLD_NAMESPACE(s) PQCP_MLDSA_NATIVE_MLDSA87_AARCH64_##s
+/******************************************************************************
+ * Name:        MLD_CONFIG_NAMESPACE_PREFIX
+ *
+ * Description: The prefix to use to namespace global symbols from mldsa/.
+ *              For integration builds, this adds an architecture-specific
+ *              suffix to distinguish different builds.
+ *
+ *              This can also be set using CFLAGS.
+ *
+ *****************************************************************************/
+#if !defined(MLD_CONFIG_NAMESPACE_PREFIX)
+#define MLD_CONFIG_NAMESPACE_PREFIX MLD_DEFAULT_NAMESPACE_PREFIX
 #endif
 
 /******************************************************************************
@@ -149,12 +173,12 @@
 #if !defined(__ASSEMBLER__)
 #include <oqs/rand.h>
 #include <stdint.h>
-#include "../../mldsa/sys.h"
+#include "../../mldsa/src/sys.h"
 static MLD_INLINE void mld_randombytes(uint8_t *ptr, size_t len)
 {
   OQS_randombytes(ptr, len);
 }
-#endif
+#endif /* !__ASSEMBLER__ */
 
 /******************************************************************************
  * Name:        MLD_CONFIG_KEYGEN_PCT
@@ -247,6 +271,51 @@ static MLD_INLINE void mld_randombytes(uint8_t *ptr, size_t len)
 #if !defined(__ASSEMBLER__)
 #include <oqs/common.h>
 #define MLD_CONFIG_EXTERNAL_API_QUALIFIER OQS_API
-#endif /* !__ASSEMBLER__ */
+#endif
+
+/******************************************************************************
+ * Name:        MLD_CONFIG_SERIAL_FIPS202_ONLY
+ *
+ * Description: Set this to use a FIPS202 implementation with global state
+ *              that supports only one active Keccak computation at a time
+ *              (e.g. some hardware accelerators).
+ *
+ *              If this option is set, ML-DSA will use FIPS202 operations
+ *              serially, ensuring that only one SHAKE context is active
+ *              at any given time.
+ *
+ *              This allows offloading Keccak computations to a hardware
+ *              accelerator that holds only a single Keccak state locally,
+ *              rather than requiring support for multiple concurrent
+ *              Keccak states.
+ *
+ *              NOTE: Depending on the target CPU, this may reduce
+ *              performance when using software FIPS202 implementations.
+ *              Only enable this when you have to.
+ *
+ *****************************************************************************/
+/* #define MLD_CONFIG_SERIAL_FIPS202_ONLY */
+
+/*************************  Config internals  ********************************/
+
+/* Default namespace
+ *
+ * Don't change this. If you need a different namespace, re-define
+ * MLD_CONFIG_NAMESPACE_PREFIX above instead, and remove the following.
+ *
+ * The default MLDSA namespace for aarch64 integration is
+ *
+ *   PQCP_MLDSA_NATIVE_MLDSA<LEVEL>_AARCH64_
+ *
+ * e.g., PQCP_MLDSA_NATIVE_MLDSA44_AARCH64_
+ */
+
+#if MLD_CONFIG_PARAMETER_SET == 44
+#define MLD_DEFAULT_NAMESPACE_PREFIX PQCP_MLDSA_NATIVE_MLDSA44_AARCH64
+#elif MLD_CONFIG_PARAMETER_SET == 65
+#define MLD_DEFAULT_NAMESPACE_PREFIX PQCP_MLDSA_NATIVE_MLDSA65_AARCH64
+#elif MLD_CONFIG_PARAMETER_SET == 87
+#define MLD_DEFAULT_NAMESPACE_PREFIX PQCP_MLDSA_NATIVE_MLDSA87_AARCH64
+#endif
 
 #endif /* !MLD_INTEGRATION_LIBOQS_CONFIG_AARCH64_H */

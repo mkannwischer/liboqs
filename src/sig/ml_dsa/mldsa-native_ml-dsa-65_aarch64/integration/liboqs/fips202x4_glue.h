@@ -9,7 +9,7 @@
 #include "fips202x4.h"
 
 /* OQS's FIPS202_X4 is as-is compatible with the one expected
- * by mldsa-native, so just remove the mlk_xxx prefix. */
+ * by mldsa-native, so just remove the mld_xxx prefix. */
 #define mld_shake128x4ctx shake128x4incctx
 #define mld_shake128x4_absorb_once shake128x4_absorb_once
 #define mld_shake128x4_squeezeblocks shake128x4_squeezeblocks
